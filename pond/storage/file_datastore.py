@@ -5,7 +5,10 @@ from pond.storage.datastore import Datastore
 
 
 class FileDatastore(Datastore):
+
     def __init__(self, base_path: str):
+        if not os.path.isdir(base_path):
+            raise RuntimeError(f'Base path {base_path} does not exist')
         self.base_path = base_path
 
     def read(self, relative_path: str) -> BytesIO:
