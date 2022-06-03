@@ -1,9 +1,8 @@
-from typing import Any, List, Generic, Optional, Union, Sequence, Dict
+from typing import Any, Generic, Optional, Union, Sequence, Dict
 
 from pond.version_name import VersionName
 
 from .adapter import Adapter, DataType, SaveMode
-from .storage import DataStore
 """
 Activity -> author, activity
 Experiment > Artefact > Version
@@ -14,6 +13,7 @@ MetadataCollector -> produce metadata
 
 
 class Activity(Generic[DataType]):
+
     def __init__(self, source: str, datastore: Any, author: str):
         pass
 
@@ -38,6 +38,7 @@ class Activity(Generic[DataType]):
 
 
 class Experiment:
+
     def __init__(self, activity: Activity, name: str):
         pass
 
