@@ -1,0 +1,8 @@
+-r requirements.txt
+-r requirements-pandas.txt
+-r requirements-dask.txt
+-r requirements-spark.txt
+flake8==4.0.*
+mypy==0.960
+pytest==7.1.*
+yapf==0.32.*
