@@ -84,11 +84,6 @@ class VersionName(ABC):
         return f'{self.__class__.__name__}("{str(self)}")'
 
 
-class VersionNameWithRun(VersionName):
-    def __init__(self, run_id: str, version_name: VersionName) -> None:
-        pass
-
-
 class SimpleVersionName(VersionName):
     """Simple version name are just an integer number (greater than 0) prefixed with "v" when
     rendered as string."""
@@ -150,16 +145,44 @@ class DateTimeVersionName(VersionName):
         return self.dt.isoformat(sep=' ', timespec='seconds')
 
 
-# class RunName(VersionName):
-#     @classmethod
-#     def from_string(klass, run_name: str) -> 'RunName':
-#         try:
-#             return klass(datetime.strptime(version_name, '%Y-%m-%d'))
-#         except ValueError:
-#             raise InvalidVersionName(version_name)
-#
-#     def next(self) -> VersionName:
-#         pass
+class RunVersionName(VersionName):
+    """Run version names are composed by a run ID and a version number."""
 
+    _FORMAT = re.compile('^run_([A-Za-z0-9_]*)_v?([1-9][0-9]*)$')
 
-FIRST_VERSION_NAME = SimpleVersionName(1)
+    def __init__(self, run_id: str, version_number: int):
+        self.run_id = run_id
+        self.version_number = version_number
+
+    # -- VersionName public interface
+
+    @classmethod
+    def from_string(klass, version_name: str) -> 'RunVersionName':
+        match = klass._FORMAT.match(version_name)
+        if not match:
+            raise InvalidVersionName(version_name)
+        run_id = match.group(1)
+        version_number = int(match.group(2))
+        return klass(run_id=run_id, version_number=version_number)
+
+    def next(self) -> 'RunVersionName':
+        return RunVersionName(run_id=self.run_id, version_number=self.version_number + 1)
+
+    # -- VersionName protected interface
+
+    def _partial_compare(self, other: VersionName) -> Optional[int]:
+        if isinstance(other, RunVersionName):
+            if self.run_id == other.run_id:
+                return 0 if self.version_number == other.version_number else (
+                    -1 if self.version_number < other.version_number else 1)
+            else:
+                return -1 if self.run_id < other.run_id else 1
+        return None
+
+    # -- Magic methods
+
+    def __str__(self) -> str:
+        return f'run_{self.run_id}_v{self.version_number}'
+
+    def __hash__(self) -> int:
+        return hash((self.run_id, self.version_number))
