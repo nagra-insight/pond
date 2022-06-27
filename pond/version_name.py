@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Union
 from datetime import datetime, date, timedelta
+from typing import Optional, Any, Union
 import re
 
 from pond.exceptions import InvalidVersionName
@@ -15,8 +15,9 @@ def _compare_classnames(this: Any, that: Any) -> int:
 class VersionName(ABC):
     """Base class for all kind of version names. It defines a way to sort them and compute the next
     one."""
+
     @classmethod
-    def parse(klass, version_name: str) -> 'VersionName':
+    def from_string(klass, version_name: str) -> 'VersionName':
         """Parses a string into a version name.
 
         Parameters
@@ -34,16 +35,17 @@ class VersionName(ABC):
         InvalidVersionName
             If the version name cannot be parsed
         """
-        # TODO: this part should be refactored to support any subclass of VersionName.
-        #       However, for now, this ugly code will do the job :)
-        methods = [SimpleVersionName.parse]
-        version = None
-        for method in methods:
+        # Only first-level subclasses for the moment, it should be sufficient
+        # At the same time, we give up defining a version name priority, and will return the
+        # first VersionName subclass that can parse the string
+        subclasses = klass.__subclasses__()
+        for subclass in subclasses:
             try:
-                version = method(version_name)
+                version = subclass.from_string(version_name)
+                break
             except InvalidVersionName:
                 pass
-        if not version:
+        else:
             raise InvalidVersionName(version_name)
         return version
 
@@ -93,7 +95,7 @@ class SimpleVersionName(VersionName):
     _FORMAT = re.compile('^v?([1-9][0-9]*)$')
 
     @classmethod
-    def parse(klass, version_name: str) -> 'SimpleVersionName':
+    def from_string(klass, version_name: str) -> 'SimpleVersionName':
         match = SimpleVersionName._FORMAT.match(version_name)
         if not match:
             raise InvalidVersionName(version_name)
@@ -103,7 +105,7 @@ class SimpleVersionName(VersionName):
         self.version_number = version_number
 
     def __hash__(self) -> int:
-        return hash((self.version_number))
+        return hash(self.version_number)
 
     def next(self) -> VersionName:
         return SimpleVersionName(self.version_number + 1)
@@ -122,7 +124,7 @@ class DateTimeVersionName(VersionName):
     """DateTime version names are versions in the form of an ISO date time with space as a time
     separator (eg. "2020-01-02 03:04:05")"""
     @classmethod
-    def parse(klass, version_name: str) -> 'DateTimeVersionName':
+    def from_string(klass, version_name: str) -> 'DateTimeVersionName':
         try:
             return klass(datetime.fromisoformat(version_name))
         except ValueError:
@@ -134,7 +136,7 @@ class DateTimeVersionName(VersionName):
         self.dt = dt
 
     def __hash__(self) -> int:
-        return hash((self.dt))
+        return hash(self.dt)
 
     def next(self) -> VersionName:
         return DateTimeVersionName(self.dt + timedelta(seconds=1))
@@ -148,32 +150,16 @@ class DateTimeVersionName(VersionName):
         return self.dt.isoformat(sep=' ', timespec='seconds')
 
 
-class DateVersionName(DateTimeVersionName):
-    """Date version names are versions in the form of an ISO date (eg. "2020-01-02")"""
-    @classmethod
-    def parse(klass, version_name: str) -> 'DateVersionName':
-        try:
-            return klass(datetime.strptime(version_name, '%Y-%m-%d'))
-        except ValueError:
-            raise InvalidVersionName(version_name)
-
-    def next(self) -> VersionName:
-        return DateVersionName(self.dt + timedelta(days=1))
-
-    def __str__(self) -> str:
-        return self.dt.date().isoformat()
-
-
-class RunName(VersionName):
-    @classmethod
-    def parse(klass, run_name: str) -> 'RunName':
-        try:
-            return klass(datetime.strptime(version_name, '%Y-%m-%d'))
-        except ValueError:
-            raise InvalidVersionName(version_name)
-
-    def next(self) -> VersionName:
-        pass
+# class RunName(VersionName):
+#     @classmethod
+#     def from_string(klass, run_name: str) -> 'RunName':
+#         try:
+#             return klass(datetime.strptime(version_name, '%Y-%m-%d'))
+#         except ValueError:
+#             raise InvalidVersionName(version_name)
+#
+#     def next(self) -> VersionName:
+#         pass
 
 
 FIRST_VERSION_NAME = SimpleVersionName(1)
