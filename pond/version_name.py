@@ -87,7 +87,13 @@ class VersionName(ABC):
 class SimpleVersionName(VersionName):
     """Simple version name are just an integer number (greater than 0) prefixed with "v" when
     rendered as string."""
+
     _FORMAT = re.compile('^v?([1-9][0-9]*)$')
+
+    def __init__(self, version_number: int):
+        self.version_number = version_number
+
+    # -- VersionName public interface
 
     @classmethod
     def from_string(klass, version_name: str) -> 'SimpleVersionName':
@@ -96,20 +102,21 @@ class SimpleVersionName(VersionName):
             raise InvalidVersionName(version_name)
         return klass(int(match[1]))
 
-    def __init__(self, version_number: int):
-        self.version_number = version_number
-
     def __hash__(self) -> int:
         return hash(self.version_number)
 
     def next(self) -> VersionName:
         return SimpleVersionName(self.version_number + 1)
 
+    # -- VersionName protected interface
+
     def _partial_compare(self, other: VersionName) -> Optional[int]:
         if isinstance(other, SimpleVersionName):
             return 0 if self.version_number == other.version_number else (
                 -1 if self.version_number < other.version_number else 1)
         return None
+
+    # -- Magic methods
 
     def __str__(self) -> str:
         return f'v{self.version_number}'
@@ -118,6 +125,14 @@ class SimpleVersionName(VersionName):
 class DateTimeVersionName(VersionName):
     """DateTime version names are versions in the form of an ISO date time with space as a time
     separator (eg. "2020-01-02 03:04:05")"""
+
+    def __init__(self, dt: Union[date, datetime] = datetime.now()):
+        if not isinstance(dt, datetime):
+            dt = datetime(dt.year, dt.month, dt.day, 0, 0, 0)
+        self.dt = dt
+
+    # -- VersionName public interface
+
     @classmethod
     def from_string(klass, version_name: str) -> 'DateTimeVersionName':
         try:
@@ -125,24 +140,23 @@ class DateTimeVersionName(VersionName):
         except ValueError:
             raise InvalidVersionName(version_name)
 
-    def __init__(self, dt: Union[date, datetime] = datetime.now()):
-        if not isinstance(dt, datetime):
-            dt = datetime(dt.year, dt.month, dt.day, 0, 0, 0)
-        self.dt = dt
-
-    def __hash__(self) -> int:
-        return hash(self.dt)
-
     def next(self) -> VersionName:
         return DateTimeVersionName(self.dt + timedelta(seconds=1))
+
+    # -- VersionName protected interface
 
     def _partial_compare(self, other: VersionName) -> Optional[int]:
         if isinstance(other, DateTimeVersionName):
             return 0 if self.dt == other.dt else (-1 if self.dt < other.dt else 0)
         return None
 
+    # -- Magic methods
+
     def __str__(self) -> str:
         return self.dt.isoformat(sep=' ', timespec='seconds')
+
+    def __hash__(self) -> int:
+        return hash(self.dt)
 
 
 class RunVersionName(VersionName):
