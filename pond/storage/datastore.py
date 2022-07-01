@@ -8,9 +8,11 @@ from pond.yaml import yaml_dump, yaml_load
 
 class Datastore(ABC):
 
+    # -- Abstract interface
+
     @abstractmethod
     def read(self, path: str) -> BytesIO:
-        """Read a sequence of bytes from the data store.
+        """ Read a sequence of bytes from the data store.
 
         Parameters
         ----------
@@ -31,7 +33,7 @@ class Datastore(ABC):
 
     @abstractmethod
     def write(self, path: str, data: BytesIO) -> None:
-        """Write a sequence of bytes to the data store.
+        """ Write a sequence of bytes to the data store.
 
         `path` contains the path relative to the root of the data store, including the name
         of the file to be created. If a file already exists at `path`, it is overwritten.
@@ -52,7 +54,7 @@ class Datastore(ABC):
 
     @abstractmethod
     def exists(self, uri: str) -> bool:
-        """Returns True if the file exists.
+        """ Returns True if the file exists.
 
         Parameters
         ----------
@@ -63,6 +65,17 @@ class Datastore(ABC):
         -------
         bool
             True if the file exists, false otherwise
+        """
+        ...
+
+    @abstractmethod
+    def create_dir(self, uri: str) -> None:
+        """ Creates the specified directory if needed.
+
+        Parameters
+        ----------
+        uri: str
+            URI to the directory to create
         """
         ...
 
@@ -124,7 +137,7 @@ class Datastore(ABC):
         return yaml_load(self.read(uri))
 
     def write_yaml(self, uri: str, content: Any) -> None:
-        """Serializes to YAML and write an object to a file
+        """ Serializes to YAML and write an object to a file.
 
         Parameters
         ----------

@@ -41,3 +41,13 @@ class FileDatastore(Datastore):
 
     def exists(self, uri: str) -> bool:
         return os.path.exists(uri)
+
+    def create_dir(self, uri: str) -> None:
+        """ Creates the specified directory if needed.
+
+        Parameters
+        ----------
+        uri: str
+            URI to the directory to create
+        """
+        os.makedirs(uri, exist_ok=True)

@@ -1,3 +1,5 @@
+import os.path
+
 from pond.storage.file_datastore import FileDatastore
 
 import pytest
@@ -65,3 +67,12 @@ def test_exists(tmp_path):
 
     ds.write(filename, b'something')
     assert ds.exists(location)
+
+
+def test_create_dir(tmp_path):
+    ds = FileDatastore(tmp_path)
+    create_path = tmp_path / 'a' / 'b'
+
+    assert not os.path.exists(create_path)
+    ds.create_dir(str(create_path))
+    assert os.path.exists(create_path)
