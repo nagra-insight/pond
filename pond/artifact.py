@@ -4,10 +4,11 @@ import time
 from typing import List, Optional, Union
 
 from pond.adapter import SaveMode
-from pond.conventions import manifest_location, version_location, version_lock_file_location
+from pond.conventions import version_manifest_location, version_location, \
+    versions_lock_file_location
 from pond.entities import DataKind
 from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, \
-    ArtifactVersionDoesNotExist, ArtifactVersionIsLocked
+    ArtifactVersionDoesNotExist, ArtifactVersionsIsLocked
 from pond.storage.datastore import Datastore
 from pond.version import Version
 from pond.version_name import SimpleVersionName, VersionName
@@ -39,10 +40,10 @@ class Artifact:
             A list of all locked version names
         """
         try:
-            raw_versions = json.load(self.store.read(self.versions_location))
+            raw_versions = json.loads(self.store.read(self.versions_location))
         except FileNotFoundError:
             raw_versions = []
-        versions = [VersionName.parse(raw_version) for raw_version in list(raw_versions)]
+        versions = [VersionName.from_string(raw_version) for raw_version in list(raw_versions)]
         return sorted(versions)
 
     def version_names(self) -> List[VersionName]:
@@ -55,7 +56,7 @@ class Artifact:
         """
         return [
             name for name in self.all_version_names()
-            if self.store.exists(manifest_location(version_location(self.location, name)))
+            if self.store.exists(version_manifest_location(version_location(self.location, name)))
         ]
 
     def latest_version_name(self) -> VersionName:
@@ -108,7 +109,7 @@ class Artifact:
 
         if version_name:
             if not isinstance(version_name, VersionName):
-                version_name = VersionName.parse(version_name)
+                version_name = VersionName.from_string(version_name)
             version = Version(name=version_name,
                               location=version_location(self.location, version_name),
                               store=self.store)
@@ -127,7 +128,7 @@ class Artifact:
             Name of the version to delete
         """
         if not isinstance(version_name, VersionName):
-            version_name = VersionName.parse(version_name)
+            version_name = VersionName.from_string(version_name)
 
         self.store.delete(version_location(self.location, version_name), recursive=True)
 
@@ -156,44 +157,46 @@ class Artifact:
             name = self._create_version_name()
         else:
             if not isinstance(version_name, VersionName):
-                version_name = VersionName.parse(version_name)
+                version_name = VersionName.from_string(version_name)
             name = self._register_version_name(version_name)
 
         version: Optional[Version]
         version = Version(name, version_location(self.location, name), self.store)
 
+        # todo: manage the case where the versioni we want to create is in creation (manifest
+        #  does not exist but files are beeing written by another process).
         if version.exists():
             if save_mode == SaveMode.ERROR_IF_EXISTS:
                 raise ArtifactVersionAlreadyExists(version.location)
             elif save_mode == SaveMode.IGNORE:
-                logger.info(f"ignoring already existing version at: {version.data_location}")
+                logger.info(f"ignoring already existing version at: {version.location}")
                 version = None
             elif save_mode == SaveMode.OVERWRITE:
-                logger.info(f"deleting partitions at: {version.data_location}")
-                self.store.delete(version.data_location, recursive=True)
-                self.store.delete(version.partitions_location, recursive=False)
-                self.store.delete(version.manifest_location, recursive=False)
+                logger.info(f"deleting partitions at: {version.location}")
+                self.store.delete(version.location, recursive=True)
 
         return version
 
     def _create_version_name(self, retry: bool = True) -> VersionName:
-        names = self.all_version_names()  # cache current version names
-        name = names[-1].next() if names else FIRST_VERSION_NAME
-        version_loc = version_location(self.location, name)
-        version_lock_file = version_lock_file_location(version_loc)
-
-        if self.store.exists(version_lock_file):
+        versions_lock_file = versions_lock_file_location(self.location)
+        if self.store.exists(versions_lock_file):
             # In case another process just created the data dir and did non update yet the versions
             # list, let's wait a little and retry once
             if retry:
                 time.sleep(NEW_VERSION_WAIT_MS / 1000)
                 return self._create_version_name(False)
             else:
-                raise ArtifactVersionIsLocked(version_loc)
+                raise ArtifactVersionsIsLocked(self.location)
+        # todo: this is not safe in case of concurrency.
+        self.store.write_string(versions_lock_file, '')
+        try:
+            names = self.all_version_names()
+            name = names[-1].next() if names else FIRST_VERSION_NAME
+            new_version_name = self._register_version_name(name)
+        finally:
+            self.store.delete(versions_lock_file)
 
-        # todo: need to delete the lock file when manifest is written
-        self.store.write_string(version_lock_file, '')
-        return self._register_version_name(name)
+        return new_version_name
 
     def _register_version_name(self, name: VersionName) -> VersionName:
         # todo: need to lock versions.json here

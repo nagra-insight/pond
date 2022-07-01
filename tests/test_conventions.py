@@ -1,13 +1,13 @@
 from pond.conventions import (
     METADATA_DIRNAME,
     MANIFEST_FILENAME,
-    manifest_location,
+    version_manifest_location,
     urijoinpath,
 )
 
 
 def test_manifest_location():
-    location = manifest_location('abc/')
+    location = version_manifest_location('abc/')
     expected = f'abc/{METADATA_DIRNAME}/{MANIFEST_FILENAME}'
     assert location == expected
 
