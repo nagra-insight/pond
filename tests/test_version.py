@@ -1,14 +1,15 @@
 import os
 
 from pond.conventions import manifest_location
+from pond.manifest import VersionManifest
 from pond.storage.file_datastore import FileDatastore
 from pond.version import Version
 from pond.version_name import SimpleVersionName
 
 
 def test_exists(tmp_path):
-    version_name = SimpleVersionName(version_number=13)
     store = FileDatastore(base_path=tmp_path)
+    version_name = SimpleVersionName(version_number=13)
 
     # False if manifest does not exists
     version_location = str(tmp_path / str(version_name))
@@ -22,7 +23,23 @@ def test_exists(tmp_path):
 
     # True if manifest file exists
     manifest_path = manifest_location(version_location)
-    os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
+    store.create_dir(os.path.dirname(manifest_path))
     store.write(manifest_path, b'abc')
     version = Version(name=version_name, location=version_location, store=store)
     assert version.exists()
+
+
+def test_manifest(tmp_path):
+    store = FileDatastore(base_path=tmp_path)
+
+    version_name = SimpleVersionName(version_number=13)
+    version_location = str(tmp_path / str(version_name))
+    manifest_path = manifest_location(version_location)
+    content = {'version': version_name.version_number, 'value': 123}
+    store.create_dir(os.path.dirname(manifest_path))
+    store.write_yaml(manifest_path, content)
+
+    version = Version(name=version_name, location=version_location, store=store)
+    manifest = version.manifest()
+    assert isinstance(manifest, VersionManifest)
+    assert manifest.to_dict() == content

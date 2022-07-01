@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pond.conventions import manifest_location
+from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
 from pond.version_name import VersionName
 
@@ -28,7 +29,7 @@ class Version:
         self.manifest_location = manifest_location(location)
 
         # In-memory version of the manifest, defined if it exists and has been read
-        self._manifest: Optional[Manifest] = None
+        self._manifest: Optional[VersionManifest] = None
 
     def exists(self) -> bool:
         """Checks whether the version exists.
@@ -41,3 +42,16 @@ class Version:
             True if the version exists, False otherwise
         """
         return self._manifest is not None or self.store.exists(self.manifest_location)
+
+    def manifest(self) -> VersionManifest:
+        """ Get the version manifest.
+
+        Returns
+        -------
+        VersionManifest
+            The version manifest
+        """
+        if not self._manifest:
+            yaml = self.store.read_yaml(self.manifest_location)
+            self._manifest = VersionManifest.from_dict(yaml)
+        return self._manifest
