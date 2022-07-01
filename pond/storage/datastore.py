@@ -45,3 +45,14 @@ class Datastore(ABC):
             If the path where the data is to be written does not exist (excluding file name).
         """
         pass
+
+    def delete(self, path: str, recursive: bool = False) -> None:
+        """Deletes a file or directory
+        Parameters
+        ----------
+        path: str
+            Path relative to the root of the data store.
+        recursive: bool, optional, default is False
+            Wether to recursively delete the location
+        """
+        pass
