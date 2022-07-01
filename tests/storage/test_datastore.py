@@ -15,6 +15,9 @@ class DummyDataStore(Datastore):
     def exists(self, uri):
         pass
 
+    def delete(self):
+        pass
+
 
 def test_read_string():
     read_content = 'æɝ'
