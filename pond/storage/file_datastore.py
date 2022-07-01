@@ -1,5 +1,6 @@
 from io import BytesIO
 import os
+from shutil import rmtree
 
 from pond.storage.datastore import Datastore
 
@@ -59,6 +60,13 @@ class FileDatastore(Datastore):
         """
         complete_uri = os.path.join(self.base_path, uri)
         return os.path.exists(complete_uri)
+
+    def delete(self, path: str, recursive: bool = False) -> None:
+        if os.path.exists(path):
+            if recursive:
+                rmtree(path)
+            else:
+                os.remove(path)
 
     # -- FileDatastore interface
 

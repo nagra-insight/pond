@@ -1,6 +1,6 @@
 from pond.conventions import (
-    MANIFEST_FILENAME,
     METADATA_DIRNAME,
+    MANIFEST_FILENAME,
     manifest_location,
     urijoinpath,
 )

@@ -139,3 +139,14 @@ class Datastore(ABC):
         # We use `write` instead of `write_string` because the yaml library already takes care
         # of the encoding
         return self.write(uri, yaml_dump(content))
+
+    def delete(self, path: str, recursive: bool = False) -> None:
+        """Deletes a file or directory
+        Parameters
+        ----------
+        path: str
+            Path relative to the root of the data store.
+        recursive: bool, optional, default is False
+            Wether to recursively delete the location
+        """
+        pass
