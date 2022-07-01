@@ -1,5 +1,6 @@
 MANIFEST_FILENAME = 'manifest.yml'
 METADATA_DIRNAME = '_pond'
+TXT_ENCODING = 'utf-8'
 
 
 def manifest_location(version_location: str) -> str:
