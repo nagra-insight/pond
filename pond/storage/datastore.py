@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
+from typing import Any
+
+from pond.conventions import TXT_ENCODING
+from pond.yaml import yaml_dump, yaml_load
 
 
 class Datastore(ABC):
@@ -84,7 +88,6 @@ class Datastore(ABC):
         """
         return self.read(uri).decode(TXT_ENCODING)
 
-
     def write_string(self, uri: str, content: str) -> None:
         """ Write a string to a file.
 
@@ -98,3 +101,38 @@ class Datastore(ABC):
         """
         self.write(uri, content.encode(TXT_ENCODING))
 
+    def read_yaml(self, uri: str) -> Any:
+        """ Read and parse a JSON file.
+
+        Parameters
+        ----------
+        uri: str
+            Location of the file
+
+        Returns
+        -------
+        Any
+            The parsed object
+
+        Raises
+        ------
+        FileNotFound
+            If the file cannot be found
+        """
+        # We use `read` instead of `read_string` because the yaml library already takes care
+        # of the encoding
+        return yaml_load(self.read(uri))
+
+    def write_yaml(self, uri: str, content: Any) -> None:
+        """Serializes to YAML and write an object to a file
+
+        Parameters
+        ----------
+        uri: str
+            URI to the file location
+        content: Any
+            Content to write
+        """
+        # We use `write` instead of `write_string` because the yaml library already takes care
+        # of the encoding
+        return self.write(uri, yaml_dump(content))

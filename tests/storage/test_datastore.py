@@ -30,3 +30,31 @@ def test_write_string():
     store.write_string('dummy/path', content)
     read_content = store.read_string('dummy/path')
     assert read_content == content
+
+
+def test_read_yaml():
+    read_content = """
+value: æɝ
+version: 2021-02-03
+    """.strip()
+
+    store = DummyDataStore(read_content)
+    dict_ = store.read_yaml('dummy')
+
+    expected = {
+        'value': 'æɝ',
+        'version': '2021-02-03',
+    }
+    assert dict_ == expected
+
+
+def test_write_yaml():
+    content = {
+        'value': 'æɝ',
+        'version': '2021-02-03',
+    }
+    store = DummyDataStore('')
+    store.write_yaml('dummy', content)
+    read_content = store.read_yaml('dummy')
+
+    assert read_content == content
