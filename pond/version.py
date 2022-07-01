@@ -55,3 +55,19 @@ class Version:
             yaml = self.store.read_yaml(self.manifest_location)
             self._manifest = VersionManifest.from_dict(yaml)
         return self._manifest
+
+    def write_manifest(self, manifest: VersionManifest) -> None:
+        """Writes the version manifest.
+
+        Parameters
+        ----------
+        manifest: VersionManifest
+            The manifest object to write
+
+        Raises
+        ------
+        Exception
+            If the write operation fails
+        """
+        self.store.write_yaml(self.manifest_location, manifest.to_dict())
+        self._manifest = manifest

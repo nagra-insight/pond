@@ -43,3 +43,36 @@ def test_manifest(tmp_path):
     manifest = version.manifest()
     assert isinstance(manifest, VersionManifest)
     assert manifest.to_dict() == content
+
+
+def test_write_manifest(tmp_path):
+    store = FileDatastore(base_path=tmp_path)
+    version_name = SimpleVersionName(version_number=13)
+    version_location = str(tmp_path / str(version_name))
+    version = Version(name=version_name, location=version_location, store=store)
+
+    content = {'version': version_name.version_number, 'value': 123}
+    manifest = VersionManifest.from_dict(content)
+
+    assert not version.exists()
+    version.write_manifest(manifest)
+    assert version.exists()
+
+
+def test_write_manifest_not_exist_if_fail(tmp_path):
+    store = FileDatastore(base_path=tmp_path)
+    version_name = SimpleVersionName(version_number=13)
+    version_location = str(tmp_path / str(version_name))
+    version = Version(name=version_name, location=version_location, store=store)
+
+    assert not version.exists()
+
+    try:
+        # The write operation is expected to fail
+        manifest = 'does not serialize'
+        version.write_manifest(manifest)
+    except AttributeError:
+        pass
+
+    # The manifest should not exist, since it has not been written
+    assert not version.exists()
