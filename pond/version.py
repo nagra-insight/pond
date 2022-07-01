@@ -6,7 +6,6 @@ from pond.storage.datastore import Datastore
 from pond.version_name import VersionName
 
 
-
 class Version:
     def __init__(self, name: VersionName, location: str, store: Datastore):
         """The Version class manages the various elements of a version: its manifest,
