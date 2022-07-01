@@ -45,3 +45,19 @@ class Datastore(ABC):
             If the path where the data is to be written does not exist (excluding file name).
         """
         pass
+
+    @abstractmethod
+    def exists(self, uri: str) -> bool:
+        """Returns True if the file exists.
+
+        Parameters
+        ----------
+        uri: str
+            URI to the file location, in absolute terms, not relative to the Datastore base path.
+
+        Returns
+        -------
+        bool
+            True if the file exists, false otherwise
+        """
+        ...

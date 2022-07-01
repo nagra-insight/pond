@@ -52,3 +52,16 @@ def test_write_file_path_does_not_exist(tmp_path):
     ds = FileDatastore(tmp_path)
     with pytest.raises(FileNotFoundError):
         ds.write('does_not_exits/blah', data)
+
+
+def test_exists(tmp_path):
+    ds = FileDatastore(tmp_path)
+    assert ds.exists(str(tmp_path))
+
+    filename = 'data.bin'
+    # Location is the *absolute* path, not relative to the Datastore
+    location = str(tmp_path / filename)
+    assert not ds.exists(location)
+
+    ds.write(filename, b'something')
+    assert ds.exists(location)

@@ -38,3 +38,6 @@ class FileDatastore(Datastore):
         path = os.path.join(self.base_path, path)
         with open(path, 'wb') as f:
             f.write(data)
+
+    def exists(self, uri: str) -> bool:
+        return os.path.exists(uri)
