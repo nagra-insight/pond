@@ -61,3 +61,40 @@ class Datastore(ABC):
             True if the file exists, false otherwise
         """
         ...
+
+    # -- Read/write utility methods
+
+    def read_string(self, uri: str) -> str:
+        """ Read a string from a file.
+
+        Parameters
+        ----------
+        uri: str
+            Location of the file
+
+        Returns
+        -------
+        str
+            The read string
+
+        Raises
+        ------
+        FileNotFound
+            If the file cannot be found
+        """
+        return self.read(uri).decode(TXT_ENCODING)
+
+
+    def write_string(self, uri: str, content: str) -> None:
+        """ Write a string to a file.
+
+        Parameters
+        ----------
+        uri: str
+            Location of the file
+
+        content: str
+            Content to write
+        """
+        self.write(uri, content.encode(TXT_ENCODING))
+
