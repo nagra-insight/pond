@@ -1,3 +1,6 @@
+from pond.version_name import VersionName
+
+
 LOCK_FILENAME = '_LOCK'
 MANIFEST_FILENAME = 'manifest.yml'
 METADATA_DIRNAME = '_pond'
