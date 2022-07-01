@@ -38,17 +38,14 @@ class Datastore(ABC):
         `path` contains the path relative to the root of the data store, including the name
         of the file to be created. If a file already exists at `path`, it is overwritten.
 
+        Intermediate directories that do not exist will be created.
+
         Parameters
         ----------
         path: str
             Path relative to the root of the data store.
         data: BytesIO
             Sequence of bytes to write at `path`.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the path where the data is to be written does not exist (excluding file name).
         """
         pass
 
@@ -59,23 +56,12 @@ class Datastore(ABC):
         Parameters
         ----------
         uri: str
-            URI to the file location, in absolute terms, not relative to the Datastore base path.
+            URI to the file location, relative to the root of the data store.
 
         Returns
         -------
         bool
             True if the file exists, false otherwise
-        """
-        ...
-
-    @abstractmethod
-    def create_dir(self, uri: str) -> None:
-        """ Creates the specified directory if needed.
-
-        Parameters
-        ----------
-        uri: str
-            URI to the directory to create
         """
         ...
 
@@ -103,6 +89,8 @@ class Datastore(ABC):
 
     def write_string(self, uri: str, content: str) -> None:
         """ Write a string to a file.
+
+        Intermediate directories that do not exist will be created.
 
         Parameters
         ----------
@@ -138,6 +126,8 @@ class Datastore(ABC):
 
     def write_yaml(self, uri: str, content: Any) -> None:
         """ Serializes to YAML and write an object to a file.
+
+        Intermediate directories that do not exist will be created.
 
         Parameters
         ----------

@@ -2,7 +2,6 @@ from pond.conventions import TXT_ENCODING
 from pond.storage.datastore import Datastore
 
 
-
 class DummyDataStore(Datastore):
     def __init__(self, read_content):
         self.read_content = read_content

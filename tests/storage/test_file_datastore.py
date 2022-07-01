@@ -48,12 +48,15 @@ def test_write(tmp_path):
     assert data == content
 
 
-def test_write_file_path_does_not_exist(tmp_path):
+def test_write_intermediate_paths_created(tmp_path):
     data = b'A test! 012'
+    filename = 'mydata.bin'
+    filepath = tmp_path / 'a' / 'b' / filename
 
     ds = FileDatastore(tmp_path)
-    with pytest.raises(FileNotFoundError):
-        ds.write('does_not_exits/blah', data)
+    ds.write(filepath, data)
+
+    assert ds.exists(filepath)
 
 
 def test_exists(tmp_path):
