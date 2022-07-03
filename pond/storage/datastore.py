@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
+import json
 from typing import Any
 
 from pond.conventions import TXT_ENCODING
@@ -151,3 +152,14 @@ class Datastore(ABC):
         # We use `write` instead of `write_string` because the yaml library already takes care
         # of the encoding
         return self.write(uri, yaml_dump(content))
+
+    def write_json(self, uri: str, content: Any) -> None:
+        """Serializes to JSON and write an object to a file
+        Parameters
+        ----------
+        uri: str
+            URI to the file location
+        content: Any
+            Content to write
+        """
+        return self.write_string(uri, json.dumps(content, separators=(',', ':')))

@@ -22,8 +22,8 @@ class ArtifactVersionAlreadyExists(Exception):
         super().__init__(f'Version "{version_location}" already exists.')
 
 
-class ArtifactVersionIsLocked(Exception):
+class ArtifactVersionsIsLocked(Exception):
 
-    def __init__(self, version_location: str):
+    def __init__(self, artifact_location: str):
         super().__init__(
-            f'Cannot create the new artifact version "{version_location}" because it is locked.')
+            f'Cannot create the new artifact version "{artifact_location}" because it is locked.')

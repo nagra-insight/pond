@@ -1,12 +1,13 @@
 from typing import Optional
 
-from pond.conventions import manifest_location
+from pond.conventions import version_manifest_location
 from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
 from pond.version_name import VersionName
 
 
 class Version:
+
     def __init__(self, name: VersionName, location: str, store: Datastore):
         """The Version class manages the various elements of a version: its manifest,
         data location, and partition list.
@@ -25,7 +26,7 @@ class Version:
         self.store = store
 
         #: str: location of the manifest file
-        self.manifest_location = manifest_location(location)
+        self.manifest_location = version_manifest_location(location)
 
         # In-memory version of the manifest, defined if it exists and has been read
         self._manifest: Optional[VersionManifest] = None
