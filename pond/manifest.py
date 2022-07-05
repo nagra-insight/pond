@@ -53,5 +53,14 @@ store/
 
 
 class VersionManifest:
-    def __init__(self):
-        pass
+    """ At the moment, just a cummy implementation. """
+
+    def __init__(self, dict):
+        self.dict = dict
+
+    @classmethod
+    def from_dict(klass, dict):
+        return klass(dict)
+
+    def to_dict(self):
+        return self.dict

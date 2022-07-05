@@ -1,3 +1,5 @@
+import os.path
+
 from pond.storage.file_datastore import FileDatastore
 
 import pytest
@@ -46,9 +48,34 @@ def test_write(tmp_path):
     assert data == content
 
 
-def test_write_file_path_does_not_exist(tmp_path):
+def test_write_intermediate_paths_created(tmp_path):
     data = b'A test! 012'
+    filename = 'mydata.bin'
+    filepath = tmp_path / 'a' / 'b' / filename
 
     ds = FileDatastore(tmp_path)
-    with pytest.raises(FileNotFoundError):
-        ds.write('does_not_exits/blah', data)
+    ds.write(filepath, data)
+
+    assert ds.exists(filepath)
+
+
+def test_exists(tmp_path):
+    ds = FileDatastore(tmp_path)
+    assert ds.exists(str(tmp_path))
+
+    filename = 'data.bin'
+    # Location is the *absolute* path, not relative to the Datastore
+    location = str(tmp_path / filename)
+    assert not ds.exists(location)
+
+    ds.write(filename, b'something')
+    assert ds.exists(location)
+
+
+def test_create_dir(tmp_path):
+    ds = FileDatastore(tmp_path)
+    create_path = tmp_path / 'a' / 'b'
+
+    assert not os.path.exists(create_path)
+    ds.create_dir(str(create_path))
+    assert os.path.exists(create_path)
