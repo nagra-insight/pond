@@ -116,7 +116,7 @@ class Datastore(ABC):
         self.write(uri, content.encode(TXT_ENCODING))
 
     def read_yaml(self, uri: str) -> Any:
-        """ Read and parse a JSON file.
+        """ Read and parse a YAML file.
 
         Parameters
         ----------
@@ -148,6 +148,26 @@ class Datastore(ABC):
             Content to write
         """
         return self.write_string(uri, yaml_dump(content))
+
+    def read_json(self, uri: str) -> Any:
+        """ Read and parse a JSON file.
+
+        Parameters
+        ----------
+        uri: str
+            Location of the file
+
+        Returns
+        -------
+        Any
+            The parsed object
+
+        Raises
+        ------
+        FileNotFound
+            If the file cannot be found
+        """
+        return json.loads(self.read_string(uri))
 
     def write_json(self, uri: str, content: Any) -> None:
         """Serializes to JSON and write an object to a file

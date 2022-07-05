@@ -60,3 +60,33 @@ def test_write_yaml():
     read_content = store.read_yaml('dummy')
 
     assert read_content == content
+
+
+def test_read_json():
+    read_content = """
+{
+   "value": "æɝ",
+   "version": "2021-02-03"
+}
+    """.strip()
+
+    store = DummyDataStore(read_content)
+    dict_ = store.read_json('dummy')
+
+    expected = {
+        'value': 'æɝ',
+        'version': '2021-02-03',
+    }
+    assert dict_ == expected
+
+
+def test_write_json():
+    content = {
+        'value': 'æɝ',
+        'version': '2021-02-03',
+    }
+    store = DummyDataStore('')
+    store.write_json('dummy', content)
+    read_content = store.read_json('dummy')
+
+    assert read_content == content
