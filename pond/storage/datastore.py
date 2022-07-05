@@ -133,9 +133,7 @@ class Datastore(ABC):
         FileNotFound
             If the file cannot be found
         """
-        # We use `read` instead of `read_string` because the yaml library already takes care
-        # of the encoding
-        return yaml_load(self.read(uri))
+        return yaml_load(self.read_string(uri))
 
     def write_yaml(self, uri: str, content: Any) -> None:
         """ Serializes to YAML and write an object to a file.
@@ -149,9 +147,7 @@ class Datastore(ABC):
         content: Any
             Content to write
         """
-        # We use `write` instead of `write_string` because the yaml library already takes care
-        # of the encoding
-        return self.write(uri, yaml_dump(content))
+        return self.write_string(uri, yaml_dump(content))
 
     def write_json(self, uri: str, content: Any) -> None:
         """Serializes to JSON and write an object to a file

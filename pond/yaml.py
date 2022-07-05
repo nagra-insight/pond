@@ -33,4 +33,4 @@ def yaml_load(source: str) -> Any:
 
 
 def yaml_dump(value: Any) -> str:
-    return cast(str, yaml.safe_dump(value, encoding=TXT_ENCODING))
+    return cast(str, yaml.safe_dump(value, allow_unicode=True))
