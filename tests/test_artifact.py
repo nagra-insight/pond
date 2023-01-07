@@ -1,17 +1,16 @@
-import pytest
-import datetime
 import os
+import pytest
 
 from pond.conventions import version_location
 from pond.exceptions import ArtifactVersionDoesNotExist
-from pond.artifact import Artifact, FIRST_VERSION_NAME
 from pond.manifest import VersionManifest
 from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
+from pond.versioned_artifact import VersionedArtifact, FIRST_VERSION_NAME
 
 
 def test_version_names():
-    artifact = Artifact(FileDatastore(os.getcwd()), 'fixtures/table_csv')
+    artifact = VersionedArtifact(FileDatastore(os.getcwd()), 'fixtures/table_csv')
 
     assert artifact.all_version_names() == [SimpleVersionName(1), SimpleVersionName(2)]
     assert artifact.version_names() == [SimpleVersionName(1)]
@@ -24,7 +23,7 @@ def test_version_names():
 
 
 def test_create_delete_versions(tmp_path):
-    artifact = Artifact(FileDatastore(os.getcwd()), str(tmp_path))
+    artifact = VersionedArtifact(FileDatastore(tmp_path), '')
 
     # create initial version
     version = artifact.create_version()

@@ -22,9 +22,16 @@ NEW_VERSION_WAIT_MS = 1000
 FIRST_VERSION_NAME = SimpleVersionName(1)
 
 
-class Artifact:
+class VersionedArtifact:
 
-    def __init__(self, datastore: Datastore, location: str):
+    def __init__(self, datastore: Datastore, location: str, version_name_factory: VersionName):
+        """
+
+        Parameters
+        ----------
+        datastore
+        location
+        """
         self.store = datastore
         self.location = location
         self.versions_location = f'{self.location}/versions.json'
@@ -33,7 +40,9 @@ class Artifact:
 
     def all_version_names(self) -> List[VersionName]:
         """Get all locked (and existing) artifact version names.
+
         Locked versions might not be existing yet, they are just reserved names.
+
         Returns
         -------
         List[VersionName]
@@ -48,7 +57,9 @@ class Artifact:
 
     def version_names(self) -> List[VersionName]:
         """Get all existing artifact version names.
+
         Versions are considered as "existing" as soon as they have a "manifest.yml"
+
         Returns
         -------
         List[VersionName]
@@ -77,10 +88,12 @@ class Artifact:
 
     def latest_version(self) -> Version:
         """Get the latest version. If none is defined, will raise an exception
+
         Raises
         ------
         TableHasNoVersion
             If the artifact has no latest version
+
         Returns
         -------
         Version
@@ -90,17 +103,20 @@ class Artifact:
 
     def version(self, version_name: Union[str, VersionName, None] = None) -> Version:
         """Get a specific existing version or the latest one if an empty string is passed
+
         Parameters
         ----------
         version_name: Union[str, VersionName], optional
             Name of the version to return. If None or "" (empty string), the latest version will
             be returned
+
         Raises
         ------
         ArtifactHasNoVersion
             If the latest version was requested and the artifact has no version
         ArtifactVersionDoesNotExist
             If the requested version does not exist
+
         Returns
         -------
         Version
@@ -122,6 +138,7 @@ class Artifact:
 
     def delete_version(self, version_name: Union[str, VersionName]) -> None:
         """Delete a version, will not fail if the version did not exist
+
         Parameters
         ----------
         version_name: Union[str, VersionName]
@@ -146,7 +163,7 @@ class Artifact:
         Parameters
         ----------
         version_name: Union[str, VersionName] = ''
-            Name of the new version. If not specified a new version name is automatically computed
+            Name of the new version. If not specified, a new version name is automatically computed
             based on the current latest (this is safe to use even if it is the first version).
         save_mode: SaveMode = SaveMode.ERROR_IF_EXISTS
             Defines how to behave if the version already exist. ERROR_IF_EXISTS is the default and
@@ -163,8 +180,8 @@ class Artifact:
         version: Optional[Version]
         version = Version(name, version_location(self.location, name), self.store)
 
-        # todo: manage the case where the versioni we want to create is in creation (manifest
-        #  does not exist but files are beeing written by another process).
+        # todo: manage the case where the version we want to create is in creation (manifest
+        #  does not exist but files are being written by another process).
         if version.exists():
             if save_mode == SaveMode.ERROR_IF_EXISTS:
                 raise ArtifactVersionAlreadyExists(version.location)
