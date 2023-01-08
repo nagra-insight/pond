@@ -28,7 +28,7 @@ def metadata():
     return metadata
 
 
-def test_to_csv(tmp_path, pandas_df, metadata):
+def test_write(tmp_path, pandas_df, metadata):
     expected = """
 # source test_to_csv_stream a b
 # m1 12.3
@@ -47,7 +47,7 @@ I2,,,,
     assert content == expected
 
 
-def test_from_csv(tmp_path, pandas_df, metadata):
+def test_read(tmp_path, pandas_df, metadata):
     original = PandasDataFrameArtifact(pandas_df, metadata)
     with open(tmp_path / 'test.csv', 'w') as f:
         original.write(f)
