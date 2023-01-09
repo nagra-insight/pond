@@ -31,7 +31,7 @@ class Artifact(ABC):
         Parameters
         ----------
         file_: file-like object
-            A file-like object from which the artifact is loaded.
+            A file-like object from which the artifact is read, opened in `rb` mode.
         kwargs: dict
             Parameters for the reader.
 
@@ -49,7 +49,7 @@ class Artifact(ABC):
         Parameters
         ----------
         file_: file-like object
-            A file-like object from which the artifact is loaded.
+            A file-like object to which the artifact is written, opened in `wb` mode.
         kwargs: dict
             Parameters for the writer.
 

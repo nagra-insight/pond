@@ -39,20 +39,21 @@ I2,,,,
 """.lstrip()
 
     artifact = PandasDataFrameArtifact(pandas_df, metadata)
-    with open(tmp_path / 'test.csv', 'w') as f:
+    with open(tmp_path / 'test.csv', 'wb') as f:
         artifact.write(f)
 
-    with open(tmp_path / 'test.csv', 'r') as f:
-        content = f.read()
+    with open(tmp_path / 'test.csv', 'rb') as f:
+        content = f.read().decode()
+        print(content)
     assert content == expected
 
 
 def test_read(tmp_path, pandas_df, metadata):
     original = PandasDataFrameArtifact(pandas_df, metadata)
-    with open(tmp_path / 'test.csv', 'w') as f:
+    with open(tmp_path / 'test.csv', 'wb') as f:
         original.write(f)
 
-    with open(tmp_path / 'test.csv', 'r') as f:
+    with open(tmp_path / 'test.csv', 'rb') as f:
         artifact = PandasDataFrameArtifact.read(f, index_col=0)
 
     pd.testing.assert_frame_equal(artifact.data, original.data)
