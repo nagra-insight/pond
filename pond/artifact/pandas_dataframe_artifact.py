@@ -9,7 +9,7 @@ class PandasDataFrameArtifact(Artifact):
     """
 
     @classmethod
-    def read(cls, file_, **kwargs):
+    def read_bytes(cls, file_, **kwargs):
         """ Read a Pandas DataFrame artifact from CSV file. """
         metadata = {}
         while file_.read(1) == b'#':
@@ -21,8 +21,12 @@ class PandasDataFrameArtifact(Artifact):
         data = pd.read_csv(file_, comment='#', **kwargs)
         return cls(data, metadata)
 
-    def write(self, file_, **kwargs):
+    def write_bytes(self, file_, **kwargs):
         for key, value in self.metadata.items():
             txt = f'# {key} {value}\n'
             file_.write(str.encode(txt, TXT_ENCODING))
         self.data.to_csv(file_, **kwargs)
+
+    @staticmethod
+    def filename(basename):
+        return basename + '.csv'

@@ -32,14 +32,14 @@ def test_from_matplotlib_fig(fig, metadata):
     assert isinstance(artifact.data, Image)
 
 
-def test_write_read(tmp_path, fig, metadata):
+def test_write_read_bytes(tmp_path, fig, metadata):
     original = PILImageArtifact.from_matplotlib_fig(fig, metadata)
 
     with open(tmp_path / 'test.png', 'wb') as f:
-        original.write(f)
+        original.write_bytes(f)
 
     with open(tmp_path / 'test.png', 'rb') as f:
-        reloaded = original.read(f)
+        reloaded = original.read_bytes(f)
 
     assert reloaded.metadata == {k: str(v) for k, v in metadata.items()}
     assert isinstance(reloaded.data, Image)

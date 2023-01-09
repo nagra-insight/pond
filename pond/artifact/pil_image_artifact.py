@@ -11,11 +11,15 @@ class PILImageArtifact(Artifact):
     # --- Artifact class interface
 
     @classmethod
-    def read(cls, file_, **kwargs):
+    def read_bytes(cls, file_, **kwargs):
         """ Read a Matlab figure artifact from CSV file. """
         image = Image.open(file_)
         metadata = image.info
         return cls(image, metadata)
+
+    @staticmethod
+    def filename(basename):
+        return basename + '.png'
 
     # --- PILImageArtifact class interface
 
@@ -31,7 +35,7 @@ class PILImageArtifact(Artifact):
 
     # --- Artifact interface
 
-    def write(self, file_, **kwargs):
+    def write_bytes(self, file_, **kwargs):
         png_metadata = PngInfo()
         for key, value in self.metadata.items():
             png_metadata.add_text(key, str(value))

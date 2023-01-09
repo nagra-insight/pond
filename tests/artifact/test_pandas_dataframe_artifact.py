@@ -28,7 +28,7 @@ def metadata():
     return metadata
 
 
-def test_write(tmp_path, pandas_df, metadata):
+def test_write_bytes(tmp_path, pandas_df, metadata):
     expected = """
 # source test_to_csv_stream a b
 # m1 12.3
@@ -40,7 +40,7 @@ I2,,,,
 
     artifact = PandasDataFrameArtifact(pandas_df, metadata)
     with open(tmp_path / 'test.csv', 'wb') as f:
-        artifact.write(f)
+        artifact.write_bytes(f)
 
     with open(tmp_path / 'test.csv', 'rb') as f:
         content = f.read().decode()
@@ -48,13 +48,12 @@ I2,,,,
     assert content == expected
 
 
-def test_read(tmp_path, pandas_df, metadata):
+def test_read_bytes(tmp_path, pandas_df, metadata):
     original = PandasDataFrameArtifact(pandas_df, metadata)
-    with open(tmp_path / 'test.csv', 'wb') as f:
-        original.write(f)
+    original.write(tmp_path / 'test.csv')
 
     with open(tmp_path / 'test.csv', 'rb') as f:
-        artifact = PandasDataFrameArtifact.read(f, index_col=0)
+        artifact = PandasDataFrameArtifact.read_bytes(f, index_col=0)
 
     pd.testing.assert_frame_equal(artifact.data, original.data)
     assert artifact.metadata == {k: str(v) for k, v in original.metadata.items()}

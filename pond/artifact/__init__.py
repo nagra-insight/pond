@@ -24,14 +24,69 @@ class Artifact(ABC):
         self.metadata = metadata
 
     @classmethod
-    @abstractmethod
-    def read(cls, file_, **kwargs):
+    def read(cls, path, **kwargs):
         """ Reads the artifact from file.
 
         Parameters
         ----------
+        path: str
+            Filename from which the artifact is read.
+        kwargs: dict
+            Parameters for the reader.
+
+        Returns
+        -------
+        artifact: Artifact
+            An instance of the artifact.
+        """
+        with open(path, 'rb') as f:
+            artifact = cls.read_bytes(f, **kwargs)
+        return artifact
+
+    def write(self, path, **kwargs):
+        """ Writes the artifact to file.
+
+        Parameters
+        ----------
+        path: str
+            Path to which the artifact is written.
+        kwargs: dict
+            Parameters for the writer.
+
+        """
+        with open(path, 'wb') as f:
+            artifact = self.write_bytes(f, **kwargs)
+        return artifact
+
+    # --- Abstract interface
+
+    @staticmethod
+    @abstractmethod
+    def filename(basename):
+        """ Complete a base filename with an extension.
+
+        Parameters
+        ----------
+        basename: str
+            The filename without extension.
+
+        Returns
+        -------
+        filename: str
+            The completed filename.
+
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def read_bytes(cls, file_, **kwargs):
+        """ Reads the artifact from a binary file.
+
+        Parameters
+        ----------
         file_: file-like object
-            A file-like object from which the artifact is read, opened in `rb` mode.
+            A file-like object from which the artifact is read, opened in binary mode.
         kwargs: dict
             Parameters for the reader.
 
@@ -43,13 +98,13 @@ class Artifact(ABC):
         pass
 
     @abstractmethod
-    def write(self, file_, **kwargs):
-        """ Writes the artifact to file.
+    def write_bytes(self, file_, **kwargs):
+        """ Writes the artifact to binary file.
 
         Parameters
         ----------
         file_: file-like object
-            A file-like object to which the artifact is written, opened in `wb` mode.
+            A file-like object to which the artifact is written, opened in binary mode.
         kwargs: dict
             Parameters for the writer.
 
