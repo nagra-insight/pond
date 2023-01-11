@@ -24,7 +24,7 @@ class Artifact(ABC):
         self.metadata = metadata
 
     @classmethod
-    def read(cls, path, **kwargs):
+    def read(cls, path, metadata=None, **kwargs):
         """ Reads the artifact from file.
 
         Parameters
@@ -33,6 +33,12 @@ class Artifact(ABC):
             Filename from which the artifact is read.
         kwargs: dict
             Parameters for the reader.
+        metadata: dict or None
+            The metadata for the artifact. If defined, it takes the place of any metadata
+            defined in the artifact itself.
+            Typically, this external artifact metadata comes from an artifact manifest. If the
+            artifact has been written as a `pond` `Version`, then the two sources of metadata
+            are identical.
 
         Returns
         -------
@@ -41,6 +47,8 @@ class Artifact(ABC):
         """
         with open(path, 'rb') as f:
             artifact = cls.read_bytes(f, **kwargs)
+        if metadata is not None:
+            artifact.metadata = metadata
         return artifact
 
     def write(self, path, **kwargs):
@@ -55,8 +63,7 @@ class Artifact(ABC):
 
         """
         with open(path, 'wb') as f:
-            artifact = self.write_bytes(f, **kwargs)
-        return artifact
+            self.write_bytes(f, **kwargs)
 
     # --- Abstract interface
 
