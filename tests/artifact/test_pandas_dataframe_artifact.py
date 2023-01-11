@@ -44,7 +44,6 @@ I2,,,,
 
     with open(tmp_path / 'test.csv', 'rb') as f:
         content = f.read().decode()
-        print(content)
     assert content == expected
 
 
@@ -53,7 +52,7 @@ def test_read_bytes(tmp_path, pandas_df, metadata):
     original.write(tmp_path / 'test.csv')
 
     with open(tmp_path / 'test.csv', 'rb') as f:
-        artifact = PandasDataFrameArtifact.read_bytes(f, index_col=0)
+        artifact = PandasDataFrameArtifact.read_bytes(f)
 
     pd.testing.assert_frame_equal(artifact.data, original.data)
     assert artifact.metadata == {k: str(v) for k, v in original.metadata.items()}

@@ -10,7 +10,11 @@ class PandasDataFrameArtifact(Artifact):
 
     @classmethod
     def read_bytes(cls, file_, **kwargs):
-        """ Read a Pandas DataFrame artifact from CSV file. """
+        """ Read a Pandas DataFrame artifact from CSV file.
+
+        By default, the first column in the file is used as the index. This can be changed using
+        the `index_col` keyword argument.
+        """
         metadata = {}
         while file_.read(1) == b'#':
             line = file_.readline().decode()
@@ -18,6 +22,8 @@ class PandasDataFrameArtifact(Artifact):
             metadata[key] = value
         file_.seek(0)
 
+        # We want to read the index from the first column by default, but it can be overwritten
+        kwargs.setdefault('index_col', 0)
         data = pd.read_csv(file_, comment='#', **kwargs)
         return cls(data, metadata)
 
