@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from io import BytesIO
 import json
-from typing import Any
+from typing import Any, IO
 
 from pond.conventions import TXT_ENCODING
 from pond.yaml import yaml_dump, yaml_load
@@ -12,7 +11,26 @@ class Datastore(ABC):
     # -- Abstract interface
 
     @abstractmethod
-    def read(self, path: str) -> BytesIO:
+    def open(self, path: str, mode: str) -> IO[Any]:
+        """ Open a file-like object
+
+        Parameters
+        ----------
+        path: str
+            Path relative to the root of the data store.
+        mode: str
+            Specifies the mode in which the file is opened.
+
+        Returns
+        -------
+        IO[Any]
+            An open file-like object.
+
+        """
+        pass
+
+    @abstractmethod
+    def read(self, path: str) -> bytes:
         """ Read a sequence of bytes from the data store.
 
         Parameters
@@ -22,7 +40,7 @@ class Datastore(ABC):
 
         Returns
         -------
-        BytesIO
+        bytes
             The sequence of bytes read from `path`.
 
         Raises
@@ -33,7 +51,7 @@ class Datastore(ABC):
         pass
 
     @abstractmethod
-    def write(self, path: str, data: BytesIO) -> None:
+    def write(self, path: str, data: bytes) -> None:
         """ Write a sequence of bytes to the data store.
 
         `path` contains the path relative to the root of the data store, including the name
@@ -45,19 +63,19 @@ class Datastore(ABC):
         ----------
         path: str
             Path relative to the root of the data store.
-        data: BytesIO
+        data: bytes
             Sequence of bytes to write at `path`.
         """
         pass
 
     @abstractmethod
-    def exists(self, uri: str) -> bool:
+    def exists(self, path: str) -> bool:
         """ Returns True if the file exists.
 
         Parameters
         ----------
-        uri: str
-            URI to the file location, relative to the root of the data store.
+        path: str
+            Path relative to the root of the data store.
 
         Returns
         -------
@@ -78,15 +96,28 @@ class Datastore(ABC):
         """
         ...
 
+    @abstractmethod
+    def makedirs(self, path: str) -> None:
+        """ Creates the specified directory if needed.
+
+        If the directories already exist, the method does not do anything.
+
+        Parameters
+        ----------
+        path: str
+            Path relative to the root of the data store.
+        """
+        ...
+
     # -- Read/write utility methods
 
-    def read_string(self, uri: str) -> str:
+    def read_string(self, path: str) -> str:
         """ Read a string from a file.
 
         Parameters
         ----------
-        uri: str
-            Location of the file
+        path: str
+            Path relative to the root of the data store.
 
         Returns
         -------
@@ -98,30 +129,30 @@ class Datastore(ABC):
         FileNotFound
             If the file cannot be found
         """
-        return self.read(uri).decode(TXT_ENCODING)
+        return self.read(path).decode(TXT_ENCODING)
 
-    def write_string(self, uri: str, content: str) -> None:
+    def write_string(self, path: str, content: str) -> None:
         """ Write a string to a file.
 
         Intermediate directories that do not exist will be created.
 
         Parameters
         ----------
-        uri: str
-            Location of the file
+        path: str
+            Path relative to the root of the data store.
 
         content: str
             Content to write
         """
-        self.write(uri, content.encode(TXT_ENCODING))
+        self.write(path, content.encode(TXT_ENCODING))
 
-    def read_yaml(self, uri: str) -> Any:
+    def read_yaml(self, path: str) -> Any:
         """ Read and parse a YAML file.
 
         Parameters
         ----------
-        uri: str
-            Location of the file
+        path: str
+            Path relative to the root of the data store.
 
         Returns
         -------
@@ -133,29 +164,29 @@ class Datastore(ABC):
         FileNotFound
             If the file cannot be found
         """
-        return yaml_load(self.read_string(uri))
+        return yaml_load(self.read_string(path))
 
-    def write_yaml(self, uri: str, content: Any) -> None:
+    def write_yaml(self, path: str, content: Any) -> None:
         """ Serializes to YAML and write an object to a file.
 
         Intermediate directories that do not exist will be created.
 
         Parameters
         ----------
-        uri: str
-            URI to the file location
+        path: str
+            Path relative to the root of the data store.
         content: Any
             Content to write
         """
-        return self.write_string(uri, yaml_dump(content))
+        return self.write_string(path, yaml_dump(content))
 
-    def read_json(self, uri: str) -> Any:
+    def read_json(self, path: str) -> Any:
         """ Read and parse a JSON file.
 
         Parameters
         ----------
-        uri: str
-            Location of the file
+        path: str
+            Path relative to the root of the data store.
 
         Returns
         -------
@@ -167,15 +198,15 @@ class Datastore(ABC):
         FileNotFound
             If the file cannot be found
         """
-        return json.loads(self.read_string(uri))
+        return json.loads(self.read_string(path))
 
-    def write_json(self, uri: str, content: Any) -> None:
+    def write_json(self, path: str, content: Any) -> None:
         """Serializes to JSON and write an object to a file
         Parameters
         ----------
-        uri: str
-            URI to the file location
+        path: str
+            Path relative to the root of the data store.
         content: Any
             Content to write
         """
-        return self.write_string(uri, json.dumps(content, separators=(',', ':')))
+        return self.write_string(path, json.dumps(content, separators=(',', ':')))

@@ -31,14 +31,14 @@ class Artifact(ABC):
         ----------
         path: str
             Filename from which the artifact is read.
-        kwargs: dict
-            Parameters for the reader.
         metadata: dict or None
             The metadata for the artifact. If defined, it takes the place of any metadata
             defined in the artifact itself.
             Typically, this external artifact metadata comes from an artifact manifest. If the
             artifact has been written as a `pond` `Version`, then the two sources of metadata
             are identical.
+        kwargs: dict
+            Parameters for the reader.
 
         Returns
         -------
@@ -46,7 +46,32 @@ class Artifact(ABC):
             An instance of the artifact.
         """
         with open(path, 'rb') as f:
-            artifact = cls.read_bytes(f, **kwargs)
+            artifact = cls.read_bytes(f, metadata, **kwargs)
+        return artifact
+
+    @classmethod
+    def read_bytes(cls, file_, metadata=None, **kwargs):
+        """ Reads the artifact from a binary file.
+
+        Parameters
+        ----------
+        file_: file-like object
+            A file-like object from which the artifact is read, opened in binary mode.
+        metadata: dict or None
+            The metadata for the artifact. If defined, it takes the place of any metadata
+            defined in the artifact itself.
+            Typically, this external artifact metadata comes from an artifact manifest. If the
+            artifact has been written as a `pond` `Version`, then the two sources of metadata
+            are identical.
+        kwargs: dict
+            Parameters for the reader.
+
+        Returns
+        -------
+        artifact: Artifact
+            An instance of the artifact.
+        """
+        artifact = cls._read_bytes(file_, **kwargs)
         if metadata is not None:
             artifact.metadata = metadata
         return artifact
@@ -87,8 +112,11 @@ class Artifact(ABC):
 
     @classmethod
     @abstractmethod
-    def read_bytes(cls, file_, **kwargs):
+    def _read_bytes(cls, file_, **kwargs):
         """ Reads the artifact from a binary file.
+
+        This is a private method that loads the artifact from a binary file without dealing with
+        the logic of the external metadata. It is called by `Artifact.read_bytes`.
 
         Parameters
         ----------

@@ -9,7 +9,7 @@ class PandasDataFrameArtifact(Artifact):
     """
 
     @classmethod
-    def read_bytes(cls, file_, **kwargs):
+    def _read_bytes(cls, file_, **kwargs):
         """ Read a Pandas DataFrame artifact from CSV file.
 
         By default, the first column in the file is used as the index. This can be changed using

@@ -3,7 +3,7 @@ from pond.artifact import Artifact
 
 class MockArtifact(Artifact):
     @classmethod
-    def read_bytes(cls, file_, **kwargs):
+    def _read_bytes(cls, file_, **kwargs):
         artifact = MockArtifact(data=[], metadata={})
         artifact.filename = file_.name
         artifact.read_kwargs = kwargs

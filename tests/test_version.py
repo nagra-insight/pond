@@ -1,78 +1,33 @@
-import os
+import pandas as pd
 
-from pond.conventions import version_manifest_location
+from pond.artifact.pandas_dataframe_artifact import PandasDataFrameArtifact
 from pond.manifest import VersionManifest
 from pond.storage.file_datastore import FileDatastore
 from pond.version import Version
 from pond.version_name import SimpleVersionName
 
 
-def test_exists(tmp_path):
-    store = FileDatastore(base_path=tmp_path)
-    version_name = SimpleVersionName(version_number=13)
+def test_write_then_read(tmp_path):
+    data = pd.DataFrame([[1, 2]], columns=['c1', 'c2'])
+    metadata = {'a': 'b'}
+    version_metadata = {'source': 'test'}
+    version = Version(
+        version_name=SimpleVersionName(version_number=42),
+        artifact=PandasDataFrameArtifact(data=data, metadata=metadata),
+        manifest=VersionManifest(version_metadata),
+    )
+    store = FileDatastore(base_path=str(tmp_path))
+    version.write(datastore=store, location='abc')
 
-    # False if manifest does not exists
-    version_location = str(tmp_path / str(version_name))
-    version = Version(name=version_name, location=version_location, store=store)
-    assert not version.exists()
+    assert store.exists('abc/v42')
+    assert store.exists('abc/v42/_pond/manifest.yml')
 
-    # True if manifest has been loaded
-    version = Version(name=version_name, location=version_location, store=store)
-    version._manifest = 'mock'
-    assert version.exists()
+    reloaded_version = Version.read(
+        version_name=SimpleVersionName(version_number=42),
+        artifact_class=PandasDataFrameArtifact,
+        location='abc',
+        datastore=store,
+    )
 
-    # True if manifest file exists
-    manifest_path = version_manifest_location(version_location)
-    store.create_dir(os.path.dirname(manifest_path))
-    store.write(manifest_path, b'abc')
-    version = Version(name=version_name, location=version_location, store=store)
-    assert version.exists()
-
-
-def test_manifest(tmp_path):
-    store = FileDatastore(base_path=tmp_path)
-
-    version_name = SimpleVersionName(version_number=13)
-    version_location = str(tmp_path / str(version_name))
-    manifest_path = version_manifest_location(version_location)
-    content = {'version': version_name.version_number, 'value': 123}
-    store.create_dir(os.path.dirname(manifest_path))
-    store.write_yaml(manifest_path, content)
-
-    version = Version(name=version_name, location=version_location, store=store)
-    manifest = version.manifest()
-    assert isinstance(manifest, VersionManifest)
-    assert manifest.to_dict() == content
-
-
-def test_write_manifest(tmp_path):
-    store = FileDatastore(base_path=tmp_path)
-    version_name = SimpleVersionName(version_number=13)
-    version_location = str(tmp_path / str(version_name))
-    version = Version(name=version_name, location=version_location, store=store)
-
-    content = {'version': version_name.version_number, 'value': 123}
-    manifest = VersionManifest.from_dict(content)
-
-    assert not version.exists()
-    version.write_manifest(manifest)
-    assert version.exists()
-
-
-def test_write_manifest_not_exist_if_fail(tmp_path):
-    store = FileDatastore(base_path=tmp_path)
-    version_name = SimpleVersionName(version_number=13)
-    version_location = str(tmp_path / str(version_name))
-    version = Version(name=version_name, location=version_location, store=store)
-
-    assert not version.exists()
-
-    try:
-        # The write operation is expected to fail
-        manifest = 'does not serialize'
-        version.write_manifest(manifest)
-    except AttributeError:
-        pass
-
-    # The manifest should not exist, since it has not been written
-    assert not version.exists()
+    pd.testing.assert_frame_equal(reloaded_version.artifact.data, data)
+    assert reloaded_version.artifact.metadata == {k: str(v) for k, v in metadata.items()}

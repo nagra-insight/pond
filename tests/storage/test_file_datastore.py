@@ -72,10 +72,21 @@ def test_exists(tmp_path):
     assert ds.exists(location)
 
 
-def test_create_dir(tmp_path):
+def test_makekdirs(tmp_path):
     ds = FileDatastore(tmp_path)
-    create_path = tmp_path / 'a' / 'b'
+    create_path = os.path.join('a', 'b')
 
-    assert not os.path.exists(create_path)
-    ds.create_dir(str(create_path))
-    assert os.path.exists(create_path)
+    expected_path = tmp_path / create_path
+    assert not os.path.exists(expected_path)
+    ds.makedirs(str(create_path))
+    assert os.path.exists(expected_path)
+
+
+def test_open(tmp_path):
+    ds = FileDatastore(tmp_path)
+    filename = 'something.bin'
+
+    assert not ds.exists('something.bin')
+    with ds.open(filename, 'wb') as f:
+        f.write(b'abc')
+    assert ds.exists('something.bin')

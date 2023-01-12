@@ -6,11 +6,17 @@ class DummyDataStore(Datastore):
     def __init__(self, read_content):
         self.read_content = read_content
 
+    def open(self, path, mode):
+        pass
+
     def read(self, path):
         return self.read_content.encode(TXT_ENCODING)
 
     def write(self, path, data):
         self.read_content = data.decode(TXT_ENCODING)
+
+    def makedirs(self, uri):
+        pass
 
     def exists(self, uri):
         pass

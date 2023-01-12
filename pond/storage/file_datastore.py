@@ -1,6 +1,6 @@
-from io import BytesIO
 import os
 from shutil import rmtree
+from typing import Any, IO
 
 from pond.storage.datastore import Datastore
 
@@ -31,35 +31,37 @@ class FileDatastore(Datastore):
 
     # -- Datastore interface
 
-    def read(self, path: str) -> BytesIO:
+    def open(self, path: str, mode: str) -> IO[Any]:
         path = os.path.join(self.base_path, path)
-        with open(path, 'rb') as f:
+        return open(path, mode)
+
+    def read(self, path: str) -> bytes:
+        path = os.path.join(self.base_path, path)
+        with self.open(path, 'rb') as f:
             data = f.read()
         return data
 
-    def write(self, path: str, data: BytesIO) -> None:
+    def write(self, path: str, data: bytes) -> None:
         path = os.path.join(self.base_path, path)
-        self.create_dir(os.path.dirname(path))
-        with open(path, 'wb') as f:
+        self.makedirs(os.path.dirname(path))
+        with self.open(path, 'wb') as f:
             f.write(data)
 
-    def exists(self, uri: str) -> bool:
+    def exists(self, path: str) -> bool:
         """ Returns True if the file exists.
 
         Parameters
         ----------
-        uri: str
-            URI to the file location, relative to the root of the data store.
-            In the FileDatastore implementation, `uri` can also be an absolute path including
-            the root of the data store.
+        path: str
+            Path relative to the root of the data store.
 
         Returns
         -------
         bool
             True if the file exists, false otherwise
         """
-        complete_uri = os.path.join(self.base_path, uri)
-        return os.path.exists(complete_uri)
+        complete_path = os.path.join(self.base_path, path)
+        return os.path.exists(complete_path)
 
     def delete(self, path: str, recursive: bool = False) -> None:
         if os.path.exists(path):
@@ -68,14 +70,15 @@ class FileDatastore(Datastore):
             else:
                 os.remove(path)
 
-    # -- FileDatastore interface
-
-    def create_dir(self, uri: str) -> None:
+    def makedirs(self, path: str) -> None:
         """ Creates the specified directory if needed.
+
+        If the directories already exist, the method does not do anything.
 
         Parameters
         ----------
-        uri: str
-            URI to the directory to create
+        path: str
+            Path relative to the root of the data store.
         """
-        os.makedirs(uri, exist_ok=True)
+        complete_path = os.path.join(self.base_path, path)
+        os.makedirs(complete_path, exist_ok=True)

@@ -49,18 +49,26 @@ store/
                     manifest.yml
                 # ...
 
+
+store/
+        artifact_name/
+            v1/
+                _pond/
+                    _LOCK
+                    manifest.yml
+                data/
+                    data.ext
+                # ...
+
 """
 
 
 class VersionManifest:
-    """ At the moment, just a cummy implementation. """
+    """ At the moment, just a dummy implementation. """
 
-    def __init__(self, dict):
-        self.dict = dict
-
-    @classmethod
-    def from_dict(klass, dict):
-        return klass(dict)
+    def __init__(self, dict_):
+        self.dict_ = dict_
 
     def to_dict(self):
-        return self.dict
+        # TODO should this be a copy
+        return self.dict_

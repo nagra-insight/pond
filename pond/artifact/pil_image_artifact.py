@@ -11,7 +11,7 @@ class PILImageArtifact(Artifact):
     # --- Artifact class interface
 
     @classmethod
-    def read_bytes(cls, file_, **kwargs):
+    def _read_bytes(cls, file_, **kwargs):
         """ Read a Matlab figure artifact from CSV file. """
         image = Image.open(file_)
         metadata = image.info
