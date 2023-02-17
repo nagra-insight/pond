@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 from typing import Optional, Any, Union
 import re
 
-from pond.exceptions import InvalidVersionName
+from pond.exceptions import IncompatibleVersionName, InvalidVersionName
 
 
 def _compare_classnames(this: Any, that: Any) -> int:
@@ -16,8 +16,10 @@ class VersionName(ABC):
     """Base class for all kind of version names. It defines a way to sort them and compute the next
     one."""
 
+    # --- VersionName class interface
+
     @classmethod
-    def from_string(klass, version_name: str) -> 'VersionName':
+    def from_string(cls, version_name: str) -> 'VersionName':
         """Parses a string into a version name.
 
         Parameters
@@ -38,7 +40,8 @@ class VersionName(ABC):
         # Only first-level subclasses for the moment, it should be sufficient
         # At the same time, we give up defining a version name priority, and will return the
         # first VersionName subclass that can parse the string
-        subclasses = klass.__subclasses__()
+        # TODO: remove the magic
+        subclasses = cls.__subclasses__()
         for subclass in subclasses:
             try:
                 version = subclass.from_string(version_name)
@@ -49,14 +52,48 @@ class VersionName(ABC):
             raise InvalidVersionName(version_name)
         return version
 
+    @classmethod
     @abstractmethod
-    def next(self) -> 'VersionName':
-        """Compute the next version"""
+    def next(cls, prev: 'VersionName') -> 'VersionName':
+        """ Generate a new version name given a previous one.
+
+        If `prev` is None, this method will generate a first version name.
+
+        Some subclasses of `VersionName` will ignore the argument `prev`, except in case of
+        collision (e.g., datetime version names).
+
+        Parameters
+        ----------
+        prev: Optional['VersionName']
+            The previous version name.
+
+        Returns
+        -------
+        VersionName
+            A new version name.
+        """
         ...
+
+    @classmethod
+    def first(cls) -> 'VersionName':
+        """ Generate the first version name.
+
+        Alias for `VersionName.next(None)`.
+
+        Returns
+        -------
+        VersionName
+            The first version name.
+        """
+        return cls.next(prev=None)
+
+    # --- VersionName protected interface
 
     @abstractmethod
     def _partial_compare(self, that: 'VersionName') -> Optional[int]:
         ...
+
+    # --- Magic methods
 
     def __cmp__(self, other: 'VersionName') -> int:
         cmp = self._partial_compare(other)
@@ -90,23 +127,27 @@ class SimpleVersionName(VersionName):
 
     _FORMAT = re.compile('^v?([1-9][0-9]*)$')
 
-    def __init__(self, version_number: int):
-        self.version_number = version_number
-
-    # -- VersionName public interface
+    # --- VersionName class interface
 
     @classmethod
-    def from_string(klass, version_name: str) -> 'SimpleVersionName':
+    def from_string(cls, version_name: str) -> 'SimpleVersionName':
         match = SimpleVersionName._FORMAT.match(version_name)
         if not match:
             raise InvalidVersionName(version_name)
-        return klass(int(match[1]))
+        return cls(int(match[1]))
 
-    def __hash__(self) -> int:
-        return hash(self.version_number)
+    @classmethod
+    def next(cls, prev: Optional['VersionName'] = None) -> VersionName:
+        if prev is None:
+            next_ = SimpleVersionName(1)
+        elif not isinstance(prev, SimpleVersionName):
+            raise IncompatibleVersionName(repr(prev))
+        else:
+            next_ = SimpleVersionName(prev.version_number + 1)
+        return next_
 
-    def next(self) -> VersionName:
-        return SimpleVersionName(self.version_number + 1)
+    def __init__(self, version_number: int):
+        self.version_number = version_number
 
     # -- VersionName protected interface
 
@@ -117,6 +158,9 @@ class SimpleVersionName(VersionName):
         return None
 
     # -- Magic methods
+
+    def __hash__(self) -> int:
+        return hash(self.version_number)
 
     def __str__(self) -> str:
         return f'v{self.version_number}'
@@ -131,17 +175,28 @@ class DateTimeVersionName(VersionName):
             dt = datetime(dt.year, dt.month, dt.day, 0, 0, 0)
         self.dt = dt
 
-    # -- VersionName public interface
+    # -- VersionName class interface
 
     @classmethod
-    def from_string(klass, version_name: str) -> 'DateTimeVersionName':
+    def from_string(cls, version_name: str) -> 'DateTimeVersionName':
         try:
-            return klass(datetime.fromisoformat(version_name))
+            return cls(datetime.fromisoformat(version_name))
         except ValueError:
             raise InvalidVersionName(version_name)
 
-    def next(self) -> VersionName:
-        return DateTimeVersionName(self.dt + timedelta(seconds=1))
+    @classmethod
+    def next(cls, prev: Optional['VersionName'] = None) -> VersionName:
+        if prev is None:
+            next_ = DateTimeVersionName(datetime.now())
+        elif not isinstance(prev, DateTimeVersionName):
+            raise IncompatibleVersionName(repr(prev))
+        else:
+            now = datetime.now()
+            if now == prev.dt:
+                next_ = DateTimeVersionName(prev.dt + timedelta(seconds=1))
+            else:
+                next_ = DateTimeVersionName(now)
+        return next_
 
     # -- VersionName protected interface
 
@@ -160,6 +215,19 @@ class DateTimeVersionName(VersionName):
 
 
 class RunVersionName(VersionName):
+
+    def __init__(self, run_id: str, version_name_cls):
+        pass
+
+    def from_string(cls, version_name):
+        "check that is starts with run_??& and parse the rest"
+
+    def next(cls, prev):
+        "parse, create VersionName.from_string(), then VersionName.next()"
+
+
+# This doesn't quite work at the moment, who is going to give it his name?
+class RunVersionName(VersionName):
     """Run version names are composed by a run ID and a version number."""
 
     _FORMAT = re.compile('^run_([A-Za-z0-9_]*)_v?([1-9][0-9]*)$')
@@ -171,13 +239,13 @@ class RunVersionName(VersionName):
     # -- VersionName public interface
 
     @classmethod
-    def from_string(klass, version_name: str) -> 'RunVersionName':
-        match = klass._FORMAT.match(version_name)
+    def from_string(cls, version_name: str) -> 'RunVersionName':
+        match = cls._FORMAT.match(version_name)
         if not match:
             raise InvalidVersionName(version_name)
         run_id = match.group(1)
         version_number = int(match.group(2))
-        return klass(run_id=run_id, version_number=version_number)
+        return cls(run_id=run_id, version_number=version_number)
 
     def next(self) -> 'RunVersionName':
         return RunVersionName(run_id=self.run_id, version_number=self.version_number + 1)

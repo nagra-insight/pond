@@ -1,30 +1,29 @@
 import json
 import logging
 import time
-from typing import List, Optional, Union
+from typing import List, Optional, Type, Union
 
 from pond.adapter import SaveMode
+from pond.artifact import Artifact
 from pond.conventions import version_manifest_location, version_location, \
     versions_lock_file_location
-from pond.entities import DataKind
 from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, \
     ArtifactVersionDoesNotExist, ArtifactVersionsIsLocked
+from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
 from pond.version import Version
-from pond.version_name import SimpleVersionName, VersionName
+from pond.version_name import VersionName
 
 logger = logging.getLogger(__name__)
 
 # Time to wait before retrying when creating a new version fails
 NEW_VERSION_WAIT_MS = 1000
 
-# a default version when no version is specified for the first version of an artifact
-FIRST_VERSION_NAME = SimpleVersionName(1)
-
 
 class VersionedArtifact:
 
-    def __init__(self, datastore: Datastore, location: str, version_name_factory: VersionName):
+    def __init__(self, artifact_name: str, location: str, datastore: Datastore,
+                 artifact_class: Type[Artifact], version_name_class: Type[VersionName]):
         """
 
         Parameters
@@ -32,11 +31,41 @@ class VersionedArtifact:
         datastore
         location
         """
-        self.store = datastore
+        self.artifact_name = artifact_name
         self.location = location
-        self.versions_location = f'{self.location}/versions.json'
+        self.datastore = datastore
+        self.artifact_class = artifact_class
+        self.version_name_class = version_name_class
 
-        self.data_kind = DataKind.DATA_FRAME
+        # todo this goes to conventions.py
+        self.versions_location = f'{location}/{artifact_name}'
+        self.versions_list_location = f'{self.versions_location}/versions.json'
+
+        if not self.datastore.exists(self.versions_location):
+            # Create the versioned artifact folder organization
+            self.datastore.makedirs(self.versions_location)
+            self._write_version_names([])
+
+
+    def write(self, data, metadata, version_name=None, **artifact_write_kwargs):
+        # todo add save_mode
+        # TODO find artifact class -> here or in Activity?
+        # TODO crash if version_name class changes from previous versions
+        # TODO crash if artifact class changes from previous versions
+        # TODO collect version metadata
+        # todo lock
+
+        if version_name is None:
+            prev_version_name = self.latest_version_name(raise_if_none=False)
+            version_name = self.version_name_class.next(prev_version_name)
+
+        artifact = self.artifact_class(data, metadata)
+        version_manifest = VersionManifest({})
+        version = Version(version_name, artifact, version_manifest)
+        version.write(self.datastore, self.versions_location, **artifact_write_kwargs)
+        self._register_version_name(version_name)
+
+        return version
 
     def all_version_names(self) -> List[VersionName]:
         """Get all locked (and existing) artifact version names.
@@ -49,7 +78,7 @@ class VersionedArtifact:
             A list of all locked version names
         """
         try:
-            raw_versions = json.loads(self.store.read(self.versions_location))
+            raw_versions = json.loads(self.datastore.read(self.versions_list_location))
         except FileNotFoundError:
             raw_versions = []
         versions = [VersionName.from_string(raw_version) for raw_version in list(raw_versions)]
@@ -65,12 +94,17 @@ class VersionedArtifact:
         List[VersionName]
             A list of all existing version names
         """
+        # todo create version_exists
         return [
             name for name in self.all_version_names()
-            if self.store.exists(version_manifest_location(version_location(self.location, name)))
+            if self.datastore.exists(
+                version_manifest_location(
+                    version_location(self.versions_location, name)
+                )
+            )
         ]
 
-    def latest_version_name(self) -> VersionName:
+    def latest_version_name(self, raise_if_none=True) -> VersionName:
         """Get the name of the latest version. If none is defined, will raise an exception
         Raises
         ------
@@ -83,7 +117,10 @@ class VersionedArtifact:
         """
         versions = self.version_names()
         if not versions:
-            raise ArtifactHasNoVersion(self.location)
+            if raise_if_none:
+                raise ArtifactHasNoVersion(self.location)
+            else:
+                return None
         return versions[-1]
 
     def latest_version(self) -> Version:
@@ -101,7 +138,7 @@ class VersionedArtifact:
         """
         return self.version(self.latest_version_name())
 
-    def version(self, version_name: Union[str, VersionName, None] = None) -> Version:
+    def read(self, version_name: Union[str, VersionName, None] = None) -> Version:
         """Get a specific existing version or the latest one if an empty string is passed
 
         Parameters
@@ -124,15 +161,20 @@ class VersionedArtifact:
         """
 
         if version_name:
-            if not isinstance(version_name, VersionName):
-                version_name = VersionName.from_string(version_name)
-            version = Version(name=version_name,
-                              location=version_location(self.location, version_name),
-                              store=self.store)
-            if not version.exists():
-                raise ArtifactVersionDoesNotExist(self.location, str(version_name))
-        else:
-            version = self.latest_version()
+            if isinstance(version_name, str):
+                version_name = self.version_name_class.from_string(version_name)
+            # todo: check that version_name matches self.version_name_class
+
+            version = Version.read(
+                version_name=version_name,
+                artifact_class=self.artifact_class,
+                datastore=self.datastore,
+                location=self.versions_location,
+            )
+            #if not version.exists():
+            #    raise ArtifactVersionDoesNotExist(self.location, str(version_name))
+        #else:
+        #    version = self.latest_version()
 
         return version
 
@@ -147,7 +189,7 @@ class VersionedArtifact:
         if not isinstance(version_name, VersionName):
             version_name = VersionName.from_string(version_name)
 
-        self.store.delete(version_location(self.location, version_name), recursive=True)
+        self.datastore.delete(version_location(self.location, version_name), recursive=True)
 
         # todo: need to lock versions.json here
         names = self.all_version_names()
@@ -160,6 +202,7 @@ class VersionedArtifact:
                        version_name: Union[str, VersionName] = '',
                        save_mode: SaveMode = SaveMode.ERROR_IF_EXISTS) -> Optional[Version]:
         """Creates a version (either a new one or overwrite/append to an existing one)
+
         Parameters
         ----------
         version_name: Union[str, VersionName] = ''
@@ -178,7 +221,7 @@ class VersionedArtifact:
             name = self._register_version_name(version_name)
 
         version: Optional[Version]
-        version = Version(name, version_location(self.location, name), self.store)
+        version = Version(name, version_location(self.location, name), self.datastore)
 
         # todo: manage the case where the version we want to create is in creation (manifest
         #  does not exist but files are being written by another process).
@@ -190,13 +233,13 @@ class VersionedArtifact:
                 version = None
             elif save_mode == SaveMode.OVERWRITE:
                 logger.info(f"deleting partitions at: {version.location}")
-                self.store.delete(version.location, recursive=True)
+                self.datastore.delete(version.location, recursive=True)
 
         return version
 
     def _create_version_name(self, retry: bool = True) -> VersionName:
         versions_lock_file = versions_lock_file_location(self.location)
-        if self.store.exists(versions_lock_file):
+        if self.datastore.exists(versions_lock_file):
             # In case another process just created the data dir and did non update yet the versions
             # list, let's wait a little and retry once
             if retry:
@@ -205,13 +248,13 @@ class VersionedArtifact:
             else:
                 raise ArtifactVersionsIsLocked(self.location)
         # todo: this is not safe in case of concurrency.
-        self.store.write_string(versions_lock_file, '')
+        self.datastore.write_string(versions_lock_file, '')
         try:
             names = self.all_version_names()
             name = names[-1].next() if names else FIRST_VERSION_NAME
             new_version_name = self._register_version_name(name)
         finally:
-            self.store.delete(versions_lock_file)
+            self.datastore.delete(versions_lock_file)
 
         return new_version_name
 
@@ -229,4 +272,4 @@ class VersionedArtifact:
     def _write_version_names(self, names: List[VersionName]) -> None:
         """Sort, serialize and write version names"""
         strings = [str(name) for name in sorted(names)]
-        self.store.write_json(self.versions_location, strings)
+        self.datastore.write_json(self.versions_list_location, strings)

@@ -1,5 +1,9 @@
 from datetime import datetime
 
+from unittest.mock import patch
+import pytest
+
+from pond.exceptions import IncompatibleVersionName
 from pond.version_name import (
     DateTimeVersionName,
     SimpleVersionName,
@@ -14,9 +18,20 @@ def test_simple_version_name_from_string():
     assert str(name) == 'v1'
 
 
+def test_simple_version_name_first():
+    name = SimpleVersionName.next(prev=None)
+    assert name == SimpleVersionName(1)
+
+
 def test_simple_version_name_next():
-    name = SimpleVersionName(37)
-    assert name.next() == SimpleVersionName(38)
+    prev = SimpleVersionName(37)
+    assert SimpleVersionName.next(prev) == SimpleVersionName(38)
+
+
+def test_simple_version_name_next_not_compatible():
+    prev = DateTimeVersionName.from_string('2020-01-22 01:02:03')
+    with pytest.raises(IncompatibleVersionName):
+        SimpleVersionName.next(prev)
 
 
 def test_date_time_version_name_from_string():
@@ -25,10 +40,33 @@ def test_date_time_version_name_from_string():
     assert str(name) == '2020-01-22 01:02:03'
 
 
-def test_date_time_version_name_next():
-    name = DateTimeVersionName(datetime(2022, 6, 12, 1, 32, 11))
+def test_date_time_version_name_first():
+    target_datetime = datetime(2022, 6, 12, 1, 32, 12)
+    with patch('datetime.datetime', return_value=target_datetime):
+        name = DateTimeVersionName.next(prev=None)
+        assert name == DateTimeVersionName(target_datetime)
+
+
+def test_date_time_version_name_next_collision():
+    prev = DateTimeVersionName(datetime(2022, 6, 12, 1, 32, 11))
+    next_ = DateTimeVersionName.next(prev)
     expected = DateTimeVersionName(datetime(2022, 6, 12, 1, 32, 12))
-    assert name.next() == expected
+    assert next_ == expected
+
+
+def test_date_time_version_name_next_no_collision():
+    target_datetime = datetime(2022, 6, 12, 1, 32, 12)
+    with patch('datetime.datetime', return_value=target_datetime):
+        prev = DateTimeVersionName(datetime(2022, 1, 1, 1, 0, 0))
+        next_ = DateTimeVersionName.next(prev)
+    expected = DateTimeVersionName(target_datetime)
+    assert next_ == expected
+
+
+def test_date_time_version_name_next_not_compatible():
+    prev = SimpleVersionName(version_number=3)
+    with pytest.raises(IncompatibleVersionName):
+        DateTimeVersionName.next(prev)
 
 
 def test_run_version_name_from_string():
