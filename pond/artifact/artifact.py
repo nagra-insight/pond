@@ -5,7 +5,7 @@ class Artifact(ABC):
     """ Knows how to read and write one type of artifact.
 
     Concrete Artifact implementation should save the metadata with the data if possible,
-    so that the artifact is self-contained even, for instance, if it sent by email.
+    so that the artifact is self-contained even if, for instance, it is sent by email.
     """
 
     def __init__(self, data, metadata=None):
@@ -25,7 +25,7 @@ class Artifact(ABC):
 
     @classmethod
     def read(cls, path, metadata=None, **kwargs):
-        """ Reads the artifact from file.
+        """ Reads the artifact from a file, given the path.
 
         Parameters
         ----------
@@ -35,10 +35,10 @@ class Artifact(ABC):
             The metadata for the artifact. If defined, it takes the place of any metadata
             defined in the artifact itself.
             Typically, this external artifact metadata comes from an artifact manifest. If the
-            artifact has been written as a `pond` `Version`, then the two sources of metadata
-            are identical.
+            artifact has been written as a `pond` `VersionedArtifact`, then the two sources of
+            metadata are identical.
         kwargs: dict
-            Parameters for the reader.
+            Additional parameters for the reader.
 
         Returns
         -------
@@ -61,8 +61,8 @@ class Artifact(ABC):
             The metadata for the artifact. If defined, it takes the place of any metadata
             defined in the artifact itself.
             Typically, this external artifact metadata comes from an artifact manifest. If the
-            artifact has been written as a `pond` `Version`, then the two sources of metadata
-            are identical.
+            artifact has been written as a `pond` `VersionedArtifact`, then the two sources of
+            metadata are identical.
         kwargs: dict
             Parameters for the reader.
 
@@ -135,6 +135,11 @@ class Artifact(ABC):
     @abstractmethod
     def write_bytes(self, file_, **kwargs):
         """ Writes the artifact to binary file.
+
+        This method also need to take care of writing the artifact metadata in the file itself,
+        whenever possible.
+        If the artifact is being written as a `pond` `VersionedArtifact`, then the metadata is also
+        stored in an external manifest.
 
         Parameters
         ----------
