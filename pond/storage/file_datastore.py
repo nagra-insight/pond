@@ -16,7 +16,7 @@ class FileDatastore(Datastore):
     Raises
     ------
     FileNotFoundError
-        If `base_path` does not exists.
+        If `base_path` does not exist.
     NotADirectoryError
         If `base_path` exists but is not a directory.
     """

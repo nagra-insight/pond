@@ -90,11 +90,12 @@ def test_versioned_artifact_write_then_read(tmp_path):
         version_name_class=SimpleVersionName,
     )
 
+    # Basic files and directories for the versioned artifact are created when they didn't exist
     assert datastore.exists(versioned_artifact.versions_location)
     assert datastore.exists(versioned_artifact.versions_list_location)
     assert versioned_artifact.version_names() == []
 
-    # create first version
+    # Create first version
     data = 'test_data'
     metadata = {'test': 'xyz'}
     version = versioned_artifact.write(data=data, metadata=metadata)
@@ -108,11 +109,11 @@ def test_versioned_artifact_write_then_read(tmp_path):
     assert reloaded_artifact.artifact.data == data
     assert reloaded_artifact.artifact.metadata == metadata
 
-    # create another version
+    # Create another version
     version2 = versioned_artifact.write(data='data2', metadata={})
     assert version2.version_name == SimpleVersionName.next(version.version_name)
 
-    # check version name list
+    # Check version name list
     assert versioned_artifact.version_names() == [first_version_name, version2.version_name]
 
 

@@ -13,8 +13,10 @@ def _compare_classnames(this: Any, that: Any) -> int:
 
 
 class VersionName(ABC):
-    """Base class for all kind of version names. It defines a way to sort them and compute the next
-    one."""
+    """ Base class for all kind of version naming conventions.
+
+    It defines a way to sort version names and compute the next one.
+    """
 
     # --- VersionName class interface
 
