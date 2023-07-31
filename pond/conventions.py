@@ -26,6 +26,7 @@ VERSIONS_LOCK_FILENAME = '_VERSIONS_LOCK'
 
 def urijoinpath(*parts: str) -> str:
     """Joins two uri path components, also ensure the right part does not end with a slash"""
+    # TODO: use os.path.join
     return '/'.join([part.rstrip('/') for part in parts])
 
 

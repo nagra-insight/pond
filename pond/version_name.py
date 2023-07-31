@@ -6,6 +6,7 @@ import re
 from pond.exceptions import IncompatibleVersionName, InvalidVersionName
 
 
+# todo: remove, every artifact only has one version name class
 def _compare_classnames(this: Any, that: Any) -> int:
     a = this.__class__.__name__
     b = that.__class__.__name__
