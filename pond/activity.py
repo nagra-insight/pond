@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Sequence, Type, Union
 
 from pond.artifact import Artifact
-from pond.conventions import DataType, SaveMode
+from pond.conventions import DataType, WriteMode
 from pond.storage.datastore import Datastore
 from pond.version import Version
 from pond.version_name import SimpleVersionName, VersionName
@@ -39,7 +39,7 @@ class Activity:
               version_name: Optional[Union[str, VersionName]] = None,
               inputs: Optional[Sequence[str]] = None,
               metadata: Optional[Dict[str, str]] = None,
-              save_mode: SaveMode = SaveMode.ERROR_IF_EXISTS) -> Version:
+              write_mode: WriteMode = WriteMode.ERROR_IF_EXISTS) -> Version:
         versioned_artifact = VersionedArtifact(
             artifact_name=name,
             location=self.location,

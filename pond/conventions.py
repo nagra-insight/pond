@@ -7,7 +7,7 @@ from pond.version_name import VersionName
 DataType = TypeVar('DataType')
 
 @unique
-class SaveMode(str, Enum):
+class WriteMode(str, Enum):
     """Version write save modes"""
 
     #: If a version already exists, it is first deleted and then written
