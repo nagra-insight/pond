@@ -1,3 +1,9 @@
+class IncompatibleVersionName(Exception):
+
+    def __init__(self, version_name: str):
+        super().__init__(f'Incompatible version name: {version_name}.')
+
+
 class InvalidVersionName(Exception):
 
     def __init__(self, version_name: str):

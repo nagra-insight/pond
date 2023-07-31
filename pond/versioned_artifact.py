@@ -6,7 +6,7 @@ from typing import List, Optional, Type, Union
 from pond.adapter import SaveMode
 from pond.artifact import Artifact
 from pond.conventions import version_manifest_location, version_location, \
-    versions_lock_file_location
+    versions_lock_file_location, versioned_artifact_location
 from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, \
     ArtifactVersionDoesNotExist, ArtifactVersionsIsLocked
 from pond.manifest import VersionManifest
@@ -38,8 +38,8 @@ class VersionedArtifact:
         self.version_name_class = version_name_class
         self.manifest = {}
 
+        self.versions_location = versioned_artifact_location(location, artifact_name)
         # todo this goes to conventions.py
-        self.versions_location = f'{location}/{artifact_name}'
         self.versions_list_location = f'{self.versions_location}/versions.json'
         self.manifest_location = f'{self.versions_location}/manifest.yml'
 
