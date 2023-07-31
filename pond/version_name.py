@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, date, timedelta
-from typing import Optional, Any, Union
+from typing import Any, Type, Optional, Union
 import re
 
 from pond.exceptions import IncompatibleVersionName, InvalidVersionName
 
 
+# todo: remove, every artifact only has one version name class
 def _compare_classnames(this: Any, that: Any) -> int:
     a = this.__class__.__name__
     b = that.__class__.__name__
@@ -17,6 +18,24 @@ class VersionName(ABC):
     one."""
 
     # --- VersionName class interface
+
+    @classmethod
+    def class_id(cls):
+        """ String ID to be able to find this class from its name. """
+        return cls.__name__
+
+    @classmethod
+    def subclass_from_id(cls, class_id: str) -> Type['Artifact']:
+        """ Find a subclass from its class ID. """
+        subclasses = cls.__subclasses__()
+        print(subclasses)
+        for subclass in subclasses:
+            print(subclass.class_id(), class_id)
+            if subclass.class_id() == class_id:
+                break
+        else:
+            raise InvalidVersionName(class_id)
+        return subclass
 
     @classmethod
     def from_string(cls, version_name: str) -> 'VersionName':
@@ -212,59 +231,3 @@ class DateTimeVersionName(VersionName):
 
     def __hash__(self) -> int:
         return hash(self.dt)
-
-
-class RunVersionName(VersionName):
-
-    def __init__(self, run_id: str, version_name_cls):
-        pass
-
-    def from_string(cls, version_name):
-        "check that is starts with run_??& and parse the rest"
-
-    def next(cls, prev):
-        "parse, create VersionName.from_string(), then VersionName.next()"
-
-
-# This doesn't quite work at the moment, who is going to give it his name?
-class RunVersionName(VersionName):
-    """Run version names are composed by a run ID and a version number."""
-
-    _FORMAT = re.compile('^run_([A-Za-z0-9_]*)_v?([1-9][0-9]*)$')
-
-    def __init__(self, run_id: str, version_number: int):
-        self.run_id = run_id
-        self.version_number = version_number
-
-    # -- VersionName public interface
-
-    @classmethod
-    def from_string(cls, version_name: str) -> 'RunVersionName':
-        match = cls._FORMAT.match(version_name)
-        if not match:
-            raise InvalidVersionName(version_name)
-        run_id = match.group(1)
-        version_number = int(match.group(2))
-        return cls(run_id=run_id, version_number=version_number)
-
-    def next(self) -> 'RunVersionName':
-        return RunVersionName(run_id=self.run_id, version_number=self.version_number + 1)
-
-    # -- VersionName protected interface
-
-    def _partial_compare(self, other: VersionName) -> Optional[int]:
-        if isinstance(other, RunVersionName):
-            if self.run_id == other.run_id:
-                return 0 if self.version_number == other.version_number else (
-                    -1 if self.version_number < other.version_number else 1)
-            else:
-                return -1 if self.run_id < other.run_id else 1
-        return None
-
-    # -- Magic methods
-
-    def __str__(self) -> str:
-        return f'run_{self.run_id}_v{self.version_number}'
-
-    def __hash__(self) -> int:
-        return hash((self.run_id, self.version_number))

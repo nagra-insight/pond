@@ -61,6 +61,47 @@ store/
                 # ...
 
 """
+from pond.artifact import Artifact
+from pond.storage.datastore import Datastore
+
+
+class ArtifactManifest:
+    """ Artifact metadata is mostly free-form, user-defined entries. """
+
+    def __init__(self, metadata: dict):
+        self.metadata = metadata
+
+    @classmethod
+    def from_artifact(cls, artifact: Artifact):
+        return cls(artifact.metadata)
+
+    @classmethod
+    def from_yaml(cls, location: str, datastore: Datastore):
+        dict_ = datastore.read_yaml(location)
+        return cls(dict_['metadata'])
+
+    def to_dict(self):
+        dict_ = {
+            'metadata': self.metadata,
+        }
+        return dict_
+
+    def write_yaml(self, location: str, datastore: Datastore):
+        datastore.write_yaml(location, self.to_dict())
+
+
+class _VersionManifest:
+    """ Version metadata contains all the information about the stored artifact,
+    and the context in which it was stored. """
+
+    VERSION = 1
+
+    def __init__(self, artifact_id: str, author: str, source: str, date_time: str, inputs: list):
+        self.artifact_id = artifact_id
+
+    @classmethod
+    def from_version(cls, version: "Version"):
+        return cls()
 
 
 class VersionManifest:

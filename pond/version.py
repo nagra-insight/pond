@@ -11,6 +11,7 @@ from pond.version_name import VersionName
 
 
 class Version:
+    # TODO: Version does not load the artifact, it only loads the manifest.
 
     def __init__(self, version_name: VersionName, artifact: Artifact, manifest: VersionManifest):
         """ Manages a version: its manifest, data, and data store locations.
@@ -29,6 +30,7 @@ class Version:
         self.version_name = version_name
         self.manifest = manifest
         self.artifact = artifact
+        self.metadata = {'artifact_class': type(artifact).__name__}
 
     def write(self, datastore: Datastore, location: str, **artifact_write_kwargs):
         manifest = self.manifest.to_dict()

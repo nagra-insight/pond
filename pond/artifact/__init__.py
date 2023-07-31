@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Type
 
 
 class Artifact(ABC):
@@ -22,6 +23,24 @@ class Artifact(ABC):
         if metadata is None:
             metadata = {}
         self.metadata = metadata
+
+    @classmethod
+    def class_id(cls):
+        """ String ID to be able to find this class from its name. """
+        return cls.__name__
+
+    @classmethod
+    def subclass_from_id(cls, class_id: str) -> Type['Artifact']:
+        """ Find a subclass from its class ID. """
+        subclasses = cls.__subclasses__()
+        print(subclasses)
+        for subclass in subclasses:
+            print(subclass.class_id(), class_id)
+            if subclass.class_id() == class_id:
+                break
+        else:
+            raise InvalidArtifactClass(class_id)
+        return subclass
 
     @classmethod
     def read(cls, path, metadata=None, **kwargs):

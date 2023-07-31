@@ -36,16 +36,36 @@ class VersionedArtifact:
         self.datastore = datastore
         self.artifact_class = artifact_class
         self.version_name_class = version_name_class
+        self.manifest = {}
 
         # todo this goes to conventions.py
         self.versions_location = f'{location}/{artifact_name}'
         self.versions_list_location = f'{self.versions_location}/versions.json'
+        self.manifest_location = f'{self.versions_location}/manifest.yml'
 
         if not self.datastore.exists(self.versions_location):
             # Create the versioned artifact folder organization
             self.datastore.makedirs(self.versions_location)
             self._write_version_names([])
+            self.manifest['artifact_class'] = artifact_class.class_id()
+            self.manifest['version_name_class'] = version_name_class.class_id()
+            self._write_manifest()
 
+        else:
+            # Load the versioned artifact metadata, including the artifact class and the version
+            # names class. If they are different from the ones passed in the constructor,
+            # raise an exception.
+            self.metadata = self._read_manifest()
+            artifact_class_id = self.metadata['artifact_class']
+            self.artifact_class = Artifact.subclass_from_id(artifact_class_id)
+            version_name_class_id = self.metadata['version_name_class']
+            self.version_name_class = VersionName.subclass_from_id(version_name_class_id)
+
+    def _write_manifest(self):
+        self.datastore.write_yaml(self.manifest_location, self.manifest)
+
+    def _read_manifest(self):
+        return self.datastore.read_yaml(self.manifest_location)
 
     def write(self, data, metadata, version_name=None, **artifact_write_kwargs):
         # todo add save_mode
@@ -136,7 +156,7 @@ class VersionedArtifact:
         Version
             The latest version of this artifact
         """
-        return self.version(self.latest_version_name())
+        return self.read(self.latest_version_name())
 
     def read(self, version_name: Union[str, VersionName, None] = None) -> Version:
         """Get a specific existing version or the latest one if an empty string is passed
@@ -164,17 +184,17 @@ class VersionedArtifact:
             if isinstance(version_name, str):
                 version_name = self.version_name_class.from_string(version_name)
             # todo: check that version_name matches self.version_name_class
+        else:
+            version_name = self.latest_version_name()
 
-            version = Version.read(
-                version_name=version_name,
-                artifact_class=self.artifact_class,
-                datastore=self.datastore,
-                location=self.versions_location,
-            )
-            #if not version.exists():
-            #    raise ArtifactVersionDoesNotExist(self.location, str(version_name))
-        #else:
-        #    version = self.latest_version()
+        version = Version.read(
+            version_name=version_name,
+            artifact_class=self.artifact_class,
+            datastore=self.datastore,
+            location=self.versions_location,
+        )
+        #if not version.exists():
+        #    raise ArtifactVersionDoesNotExist(self.location, str(version_name))
 
         return version
 
