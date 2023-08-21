@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional, Type, Union
 
 from pond.artifact import Artifact
-from pond.entities import WriteMode
+from pond.conventions import WriteMode
 from pond.storage.datastore import Datastore
 from pond.version import Version
 from pond.version_name import SimpleVersionName, VersionName

@@ -7,7 +7,6 @@ from pond.exceptions import IncompatibleVersionName
 from pond.version_name import (
     DateTimeVersionName,
     SimpleVersionName,
-    RunVersionName,
     VersionName,
 )
 
@@ -69,28 +68,13 @@ def test_date_time_version_name_next_not_compatible():
         DateTimeVersionName.next(prev)
 
 
-def test_run_version_name_from_string():
-    name = VersionName.from_string('run_bla_h_v8')
-    expected = RunVersionName(run_id='bla_h', version_number=8)
-    assert expected == name
-
-
-def test_run_version_name_next():
-    name = RunVersionName(run_id='bla_h', version_number=8)
-    expected = RunVersionName(run_id='bla_h', version_number=9)
-    assert name.next() == expected
-
-
 def test_ordering():
     versions = [
         "2018-12-04 03:28:12",
         "v1",
         "2018-01-01 10:00:12",
         "v10",
-        "run_xyz_v1",
         "v2",
-        "run_abc_v3",
-        "run_abc_v1",
         "2018-01-01",
     ]
     names = sorted([VersionName.from_string(version) for version in versions])
@@ -99,9 +83,6 @@ def test_ordering():
         "2018-01-01 00:00:00",
         '2018-01-01 10:00:12',
         '2018-12-04 03:28:12',
-        'run_abc_v1',
-        'run_abc_v3',
-        'run_xyz_v1',
         'v1',
         'v2',
         'v10',

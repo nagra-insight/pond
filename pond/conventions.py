@@ -18,6 +18,12 @@ class WriteMode(str, Enum):
     ERROR_IF_EXISTS = 'errorifexists'
 
 
+class DataKind(Enum):
+    DATA_FRAME = 1
+    PICTURE = 2
+    MODEL = 3
+
+
 MANIFEST_FILENAME = 'manifest.yml'
 METADATA_DIRNAME = '_pond'
 TXT_ENCODING = 'utf-8'

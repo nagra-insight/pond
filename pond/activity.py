@@ -28,9 +28,11 @@ class Activity:
             artifact_name=name,
             location=self.location,
             datastore=self.datastore,
+            artifact_class=None,  # TODO not none
+            version_name_class=None,  # TODO not none
         )
-        version = versioned_artifact.read(version_name=version_name)
-        return version
+        data = versioned_artifact.read(version_name=version_name)
+        return data.artifact.data
 
     def write(self,
               data: DataType,

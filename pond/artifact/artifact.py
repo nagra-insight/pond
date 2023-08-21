@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Type
 
 
 class Artifact(ABC):
@@ -7,6 +8,28 @@ class Artifact(ABC):
     Concrete Artifact implementation should save the metadata with the data if possible,
     so that the artifact is self-contained even if, for instance, it is sent by email.
     """
+
+    # --- Artifact class interface
+
+    @classmethod
+    def class_id(cls):
+        """ String ID to be able to find this class from its name. """
+        return cls.__name__
+
+    @classmethod
+    def subclass_from_id(cls, class_id: str) -> Type['Artifact']:
+        """ Find a subclass from its class ID. """
+        subclasses = cls.__subclasses__()
+        print(subclasses)
+        for subclass in subclasses:
+            print(subclass.class_id(), class_id)
+            if subclass.class_id() == class_id:
+                break
+        else:
+            raise InvalidArtifactClass(class_id)
+        return subclass
+
+    # --- Artifact public interface
 
     def __init__(self, data, metadata=None):
         """ Create an Artifact.
