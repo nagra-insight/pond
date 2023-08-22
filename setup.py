@@ -32,7 +32,8 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup_conf = dict(name='pond',
                   version='0.1.0',
-                  description='A frog jumps into the pond',
+                  description='A library to keep scientists from losing their minds: storage, '
+                              'versioning, and lineage of artifacts',
                   long_description=long_description,
                   author=['Pietro Berkes', 'Samuel Suter'],
                   author_email=['pietro.berkes@nagra.com', 'samuel.suter@nagra.com'],
