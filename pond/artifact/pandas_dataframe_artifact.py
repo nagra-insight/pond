@@ -1,6 +1,7 @@
 import pandas as pd
 
 from pond.artifact import Artifact
+from pond.artifact.artifact_registry import global_artifact_registry
 from pond.conventions import TXT_ENCODING
 
 
@@ -36,3 +37,6 @@ class PandasDataFrameArtifact(Artifact):
     @staticmethod
     def filename(basename):
         return basename + '.csv'
+
+
+global_artifact_registry.register(artifact_class=PandasDataFrameArtifact, data_class=pd.DataFrame, format='csv')

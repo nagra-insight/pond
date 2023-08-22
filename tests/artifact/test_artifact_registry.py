@@ -16,8 +16,8 @@ class MockArtifactExcel(Artifact):
 @pytest.fixture()
 def registry():
     registry = ArtifactRegistry()
-    registry.register(list, MockArtifactCSV, format='csv')
-    registry.register(list, MockArtifactExcel, format='xlsx')
+    registry.register(MockArtifactCSV, list, format='csv')
+    registry.register(MockArtifactExcel, list, format='xlsx')
     return registry
 
 

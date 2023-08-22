@@ -1,6 +1,7 @@
 from pond import Pond
 from pond.artifact import Artifact
-from pond.conventions import version_location, versioned_artifact_location
+from pond.artifact.artifact_registry import ArtifactRegistry
+from pond.conventions import versioned_artifact_location
 from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
 
@@ -60,3 +61,24 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Read the first version
     data_reloaded = pond.read('foo', version_name='v1')
     assert data_reloaded == data
+
+
+def test_pond_write_then_read_artifact_implicit(tmp_path):
+    # Can write and read artifacts, finding an appropriate artifact class
+    registry = ArtifactRegistry()
+    registry.register(artifact_class=MockArtifact, data_class=str)
+    datastore = FileDatastore(tmp_path)
+    pond = Pond(
+        source='test_pond.py',
+        datastore=datastore,
+        location='test_location',
+        author='John Doe',
+        version_name_class=SimpleVersionName,
+        artifact_registry=registry,
+    )
+
+    # Save data without artifact class
+    data = 'test_data'
+    metadata = {'test': 'xyz'}
+    version = pond.write(data, name='foo', metadata=metadata)
+    assert isinstance(version.artifact, MockArtifact)

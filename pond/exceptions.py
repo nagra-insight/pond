@@ -33,3 +33,17 @@ class ArtifactVersionsIsLocked(Exception):
     def __init__(self, artifact_location: str):
         super().__init__(
             f'Cannot create the new artifact version "{artifact_location}" because it is locked.')
+
+
+class FormatNotFound(Exception):
+    def __init__(self, data_class, format):
+        super().__init__(
+            f"Artifact with format '{format}' compatible with data type '{data_class.__name__}' not found."
+        )
+
+
+class ArtifactNotFound(Exception):
+    def __init__(self, data_class):
+        super().__init__(
+            f"No artifact compatible with data type '{data_class.__name__}'."
+        )

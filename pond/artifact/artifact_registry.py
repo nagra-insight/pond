@@ -6,13 +6,15 @@ from pond.exceptions import ArtifactNotFound, FormatNotFound
 ArtifactRegistryItem = namedtuple('ArtifactRegistryItem', ['artifact_class', 'format'])
 
 
+# todo: handle subclasses of a data class
+
 class ArtifactRegistry:
     """ Registry of data types to compatible artifact classes. """
 
     def __init__(self):
         self._register = defaultdict(list)
 
-    def register(self, data_class, artifact_class, format=None):
+    def register(self, artifact_class, data_class, format=None):
         item = ArtifactRegistryItem(artifact_class=artifact_class, format=format)
         self._register[data_class].append(item)
 

@@ -30,9 +30,7 @@ class VersionName(ABC):
     def subclass_from_id(cls, class_id: str) -> Type['Artifact']:
         """ Find a subclass from its class ID. """
         subclasses = cls.__subclasses__()
-        print(subclasses)
         for subclass in subclasses:
-            print(subclass.class_id(), class_id)
             if subclass.class_id() == class_id:
                 break
         else:

@@ -2,6 +2,7 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 from pond.artifact import Artifact
+from pond.artifact.artifact_registry import global_artifact_registry
 
 
 class PILImageArtifact(Artifact):
@@ -41,3 +42,6 @@ class PILImageArtifact(Artifact):
             png_metadata.add_text(key, str(value))
 
         self.data.save(file_, pnginfo=png_metadata)
+
+
+global_artifact_registry.register(artifact_class=PILImageArtifact, data_class=Image, format='png')
