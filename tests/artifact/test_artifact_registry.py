@@ -50,3 +50,10 @@ def test_lookup_data_type_not_found(registry):
 
     msg = str(excinfo.value)
     assert 'dict' in msg
+
+
+def test_get_available_artifacts(registry):
+    artifact_classes = registry.get_available_artifacts(list)
+
+    expected = [(MockArtifactCSV, 'csv'), (MockArtifactExcel, 'xlsx')]
+    assert artifact_classes == expected

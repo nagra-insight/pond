@@ -16,6 +16,21 @@ class ArtifactRegistry:
         item = ArtifactRegistryItem(artifact_class=artifact_class, format=format)
         self._register[data_class].append(item)
 
+    def get_available_artifacts(self, data_class):
+        """ Get all available artifacts for a given data class.
+
+        Parameters
+        ----------
+        data_class: class
+            Data class for which we need to find an adapter.
+
+        Returns
+        -------
+        items: list of ArtifactRegistryItem
+            All registered (artifact, format) items compatible with data_class.
+        """
+        return self._register[data_class]
+
     def get_artifact(self, data_class, format=None):
         """
         In case multiple artifacts are available for the same data class and format,
@@ -34,7 +49,7 @@ class ArtifactRegistry:
             Artifact class
 
         """
-        items = self._register[data_class]
+        items = self.get_available_artifacts(data_class)
         if len(items) == 0:
             raise ArtifactNotFound(data_class)
 
@@ -49,9 +64,6 @@ class ArtifactRegistry:
                 raise FormatNotFound(data_class, format)
 
         return artifact_class
-
-    def get_formats_for_data(self, data_class):
-        pass
 
 
 global_artifact_registry = ArtifactRegistry()
