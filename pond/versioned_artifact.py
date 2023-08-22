@@ -69,7 +69,7 @@ class VersionedArtifact:
 
     def write(self, data, metadata, version_name=None, **artifact_write_kwargs):
         # todo add save_mode
-        # TODO find artifact class -> here or in Activity?
+        # TODO find artifact class -> here or in Pond?
         # TODO crash if version_name class changes from previous versions
         # TODO crash if artifact class changes from previous versions
         # TODO collect version metadata

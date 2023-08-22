@@ -1,15 +1,12 @@
-import os
-import pytest
-
 from pond import Pond
 from pond.artifact import Artifact
-from pond.artifact.pandas_dataframe_artifact import PandasDataFrameArtifact
-from pond.conventions import version_location
-from pond.exceptions import ArtifactVersionDoesNotExist
-from pond.manifest import VersionManifest
+from pond.conventions import version_location, versioned_artifact_location
 from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
-from pond.versioned_artifact import VersionedArtifact
+
+
+# test: inputs are saved as metadata
+# test: pond.write without giving class explicitly
 
 
 class MockArtifact(Artifact):
@@ -26,46 +23,40 @@ class MockArtifact(Artifact):
         return basename + '.mock'
 
 
-# activity.write(artifact, artifact_name)
-# - use artifact_name to look for a versioned artifact in a given datastore and location
-#   - if it doesn't exist, create it; use the artifact.class to create a versioned artifact of
-#   that kind
-#   - if it does exist, check that the artifact class corresponds to the versioned artifact
-#   metadata
-
-def test_pond_write_then_read(tmp_path):
+def test_pond_write_then_read_artifact_explicit(tmp_path):
+    # Can write and read artifacts when explicitly giving the artifact class
     datastore = FileDatastore(tmp_path)
     pond = Pond(
-        source='test_source',
-        author='test_author',
+        source='test_pond.py',
         datastore=datastore,
-        location='loc',
+        location='test_location',
+        author='John Doe',
         version_name_class=SimpleVersionName,
     )
 
-    # create first version
-    data = 'abc'
+    # Save first version of the data
+    data = 'test_data'
     metadata = {'test': 'xyz'}
-    version = pond.write(data=data, name='test_data', metadata=metadata, artifact_class=MockArtifact)
+    version = pond.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
 
     first_version_name = SimpleVersionName.first()
     assert version.version_name == first_version_name
-    assert version.artifact.data == data
-    assert version.artifact.metadata['test'] == 'xyz'
-    # todo: this shouldn't be here
-    assert version.metadata['artifact_class'] == 'MockArtifact'
-    #assert version.metadata['version_name_class'] == 'SimpleVersionName'
-    assert datastore.exists('loc/test_data/v1')
+    assert version.artifact.metadata['test'] == metadata['test']
+    assert datastore.exists(
+        versioned_artifact_location('test_location', 'foo'),
+    )
+    assert isinstance(version.artifact, MockArtifact)
 
-    # Reload the first version
-    reloaded_data = pond.read(name='test_data', version_name=first_version_name)
-    assert reloaded_data == data
+    # Write second version of the data
+    data2 = 'test_data2'
+    metadata2 = {'test': 'xyz2'}
+    version2 = pond.write(data2, name='foo', artifact_class=MockArtifact, metadata=metadata2)
+    assert version2.version_name == SimpleVersionName.next(first_version_name)
 
-    # todo: separate test
-    # Reload the latest version
-    reloaded_data = pond.read(name='test_data')
-    assert reloaded_data == data
+    # Read the latest version
+    data_reloaded = pond.read('foo')
+    assert data_reloaded == data2
 
-
-# test: inputs are saved as metadata
-# test: pond.write without giving class explicitly
+    # Read the first version
+    data_reloaded = pond.read('foo', version_name='v1')
+    assert data_reloaded == data

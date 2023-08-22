@@ -8,7 +8,7 @@ from pond.version_name import SimpleVersionName, VersionName
 from pond.versioned_artifact import VersionedArtifact
 
 
-class Activity:
+class Pond:
     # todo: source is a Source object
     def __init__(self,
                  source: str,

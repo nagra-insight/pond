@@ -4,7 +4,7 @@ database: test_db
 table: table_csv
 version: v1
 author: robot@testing.com
-activity: "xri://com.nagra.insight/ingestion/ingest/1.0.0-SNAPSHOT-1563266027563"
+pond_version: "xri://com.nagra.insight/ingestion/ingest/1.0.0-SNAPSHOT-1563266027563"
 date_time: "2019-07-11 16:48:58"
 schema:
   data:

@@ -73,12 +73,16 @@ class MockArtifact(Artifact):
         return basename + '.mock'
 
 
-# activity.write(artifact, artifact_name)
+# pond.write(artifact, artifact_name)
 # - use artifact_name to look for a versioned artifact in a given datastore and location
 #   - if it doesn't exist, create it; use the artifact.class to create a versioned artifact of
 #   that kind
 #   - if it does exist, check that the artifact class corresponds to the versioned artifact
 #   metadata
+
+# test: all_version_names vs version_names
+# test: delete version
+# test: write new version with different artifact class -> error
 
 def test_versioned_artifact_write_then_read(tmp_path):
     datastore = FileDatastore(tmp_path)
@@ -116,6 +120,3 @@ def test_versioned_artifact_write_then_read(tmp_path):
     # Check version name list
     assert versioned_artifact.version_names() == [first_version_name, version2.version_name]
 
-
-# test: all_version_names vs version_names
-# test: delete version
