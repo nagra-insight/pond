@@ -32,7 +32,7 @@ class Pond:
         `read_version`
         """
         versioned_artifact = VersionedArtifact(
-            artifact_name=name,
+            name=name,
             location=self.location,
             datastore=self.datastore,
             artifact_class=None,  # TODO not none
@@ -58,9 +58,8 @@ class Pond:
         metadata['source'] = self.source
         metadata['author'] = self.author
 
-        # todo: artifact_name -> name
         versioned_artifact = VersionedArtifact(
-            artifact_name=name,
+            name=name,
             location=self.location,
             datastore=self.datastore,
             artifact_class=artifact_class,

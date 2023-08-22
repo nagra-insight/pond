@@ -87,7 +87,7 @@ class MockArtifact(Artifact):
 def test_versioned_artifact_write_then_read(tmp_path):
     datastore = FileDatastore(tmp_path)
     versioned_artifact = VersionedArtifact(
-        artifact_name='test_artifact',
+        name='test_artifact',
         location='test_location',
         datastore=datastore,
         artifact_class=MockArtifact,

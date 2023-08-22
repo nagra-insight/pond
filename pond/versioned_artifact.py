@@ -3,9 +3,8 @@ import logging
 import time
 from typing import List, Optional, Type, Union
 
-from pond.adapter import SaveMode
 from pond.artifact import Artifact
-from pond.conventions import version_manifest_location, version_location, \
+from pond.conventions import WriteMode, version_manifest_location, version_location, \
     versions_lock_file_location, versioned_artifact_location
 from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, \
     ArtifactVersionDoesNotExist, ArtifactVersionsIsLocked
@@ -22,7 +21,7 @@ NEW_VERSION_WAIT_MS = 1000
 
 class VersionedArtifact:
 
-    def __init__(self, artifact_name: str, location: str, datastore: Datastore,
+    def __init__(self, name: str, location: str, datastore: Datastore,
                  artifact_class: Type[Artifact], version_name_class: Type[VersionName]):
         """
 
@@ -31,14 +30,14 @@ class VersionedArtifact:
         datastore
         location
         """
-        self.artifact_name = artifact_name
+        self.name = name
         self.location = location
         self.datastore = datastore
         self.artifact_class = artifact_class
         self.version_name_class = version_name_class
         self.manifest = {}
 
-        self.versions_location = versioned_artifact_location(location, artifact_name)
+        self.versions_location = versioned_artifact_location(location, name)
         # todo this goes to conventions.py
         self.versions_list_location = f'{self.versions_location}/versions.json'
         self.manifest_location = f'{self.versions_location}/manifest.yml'
@@ -220,7 +219,7 @@ class VersionedArtifact:
 
     def create_version(self,
                        version_name: Union[str, VersionName] = '',
-                       save_mode: SaveMode = SaveMode.ERROR_IF_EXISTS) -> Optional[Version]:
+                       save_mode: WriteMode = WriteMode.ERROR_IF_EXISTS) -> Optional[Version]:
         """Creates a version (either a new one or overwrite/append to an existing one)
 
         Parameters
@@ -228,10 +227,10 @@ class VersionedArtifact:
         version_name: Union[str, VersionName] = ''
             Name of the new version. If not specified, a new version name is automatically computed
             based on the current latest (this is safe to use even if it is the first version).
-        save_mode: SaveMode = SaveMode.ERROR_IF_EXISTS
+        save_mode: WriteMode = WriteMode.ERROR_IF_EXISTS
             Defines how to behave if the version already exist. ERROR_IF_EXISTS is the default and
             recommended behavior. if you want to overwrite a version you have to explicitly set it
-            to SaveMode.OVERWRITE.
+            to WriteMode.OVERWRITE.
         """
         if not version_name:
             name = self._create_version_name()
@@ -246,12 +245,12 @@ class VersionedArtifact:
         # todo: manage the case where the version we want to create is in creation (manifest
         #  does not exist but files are being written by another process).
         if version.exists():
-            if save_mode == SaveMode.ERROR_IF_EXISTS:
+            if save_mode == WriteMode.ERROR_IF_EXISTS:
                 raise ArtifactVersionAlreadyExists(version.location)
-            elif save_mode == SaveMode.IGNORE:
+            elif save_mode == WriteMode.IGNORE:
                 logger.info(f"ignoring already existing version at: {version.location}")
                 version = None
-            elif save_mode == SaveMode.OVERWRITE:
+            elif save_mode == WriteMode.OVERWRITE:
                 logger.info(f"deleting partitions at: {version.location}")
                 self.datastore.delete(version.location, recursive=True)
 
