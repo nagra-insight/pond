@@ -5,6 +5,10 @@ from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
 
 
+# test: inputs are saved as metadata
+# test: pond.write without giving class explicitly
+
+
 class MockArtifact(Artifact):
     @classmethod
     def _read_bytes(cls, file_, **kwargs):
@@ -27,6 +31,7 @@ def test_activity_write_then_read_artifact_explicit(tmp_path):
         datastore=datastore,
         location='test_location',
         author='John Doe',
+        version_name_class=SimpleVersionName,
     )
 
     # Save first version of the data
@@ -36,16 +41,17 @@ def test_activity_write_then_read_artifact_explicit(tmp_path):
 
     first_version_name = SimpleVersionName.first()
     assert version.version_name == first_version_name
-    assert version.artifact.metadata == metadata
+    assert version.artifact.metadata['test'] == metadata['test']
     assert datastore.exists(
         versioned_artifact_location('test_location', 'foo'),
     )
     assert isinstance(version.artifact, MockArtifact)
 
     # Write second version of the data
-    data2 = 'test_data'
-    metadata2 = {'test': 'xyz'}
+    data2 = 'test_data2'
+    metadata2 = {'test': 'xyz2'}
     version2 = activity.write(data2, name='foo', artifact_class=MockArtifact, metadata=metadata2)
+    assert version2.version_name == SimpleVersionName.next(first_version_name)
 
     # Read the latest version
     data_reloaded = activity.read('foo')
