@@ -56,6 +56,8 @@ class Version:
             self.artifact.write_bytes(f, **artifact_write_kwargs)
         # TODO return storage manifest?
 
+
+    # todo adjust location, datastore order here and in write
     @classmethod
     def read(cls, version_name, artifact_class, location, datastore):
         #: location of the version folder

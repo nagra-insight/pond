@@ -1,8 +1,6 @@
 import yaml
 from typing import cast, Any
 
-from pond.conventions import TXT_ENCODING
-
 
 # See: https://stackoverflow.com/questions/34667108/ignore-dates-and-times-while-parsing-yaml
 class NoDatesSafeLoader(yaml.SafeLoader):

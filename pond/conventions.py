@@ -6,6 +6,7 @@ from pond.version_name import VersionName
 
 DataType = TypeVar('DataType')
 
+
 @unique
 class WriteMode(str, Enum):
     """Version write save modes"""
@@ -52,6 +53,7 @@ def version_data_location(version_location: str, data_filename: str) -> str:
     return urijoinpath(version_location, data_filename)
 
 
+#todo: use or remove
 def version_manifest_location(version_location: str) -> str:
     """ Manifest location with respect to a version root. """
     return urijoinpath(version_location, METADATA_DIRNAME, MANIFEST_FILENAME)

@@ -6,8 +6,7 @@ from typing import List, Optional, Type, Union
 from pond.artifact import Artifact
 from pond.conventions import WriteMode, version_manifest_location, version_location, \
     versions_lock_file_location, versioned_artifact_location
-from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, \
-    ArtifactVersionDoesNotExist, ArtifactVersionsIsLocked
+from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, ArtifactVersionsIsLocked
 from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
 from pond.version import Version
@@ -68,7 +67,6 @@ class VersionedArtifact:
 
     def write(self, data, metadata, version_name=None, **artifact_write_kwargs):
         # todo add save_mode
-        # TODO find artifact class -> here or in Pond?
         # TODO crash if version_name class changes from previous versions
         # TODO crash if artifact class changes from previous versions
         # TODO collect version metadata

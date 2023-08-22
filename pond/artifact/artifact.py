@@ -11,6 +11,8 @@ class Artifact(ABC):
 
     # --- Artifact class interface
 
+    # todo: what is the class_id for?
+
     @classmethod
     def class_id(cls):
         """ String ID to be able to find this class from its name. """
