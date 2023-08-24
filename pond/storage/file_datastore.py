@@ -42,7 +42,6 @@ class FileDatastore(Datastore):
         return data
 
     def write(self, path: str, data: bytes) -> None:
-        path = os.path.join(self.base_path, path)
         self.makedirs(os.path.dirname(path))
         with self.open(path, 'wb') as f:
             f.write(data)

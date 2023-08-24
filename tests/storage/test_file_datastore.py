@@ -51,12 +51,28 @@ def test_write(tmp_path):
 def test_write_intermediate_paths_created(tmp_path):
     data = b'A test! 012'
     filename = 'mydata.bin'
-    filepath = tmp_path / 'a' / 'b' / filename
+    filepath = f'a/b/{filename}'
 
     ds = FileDatastore(tmp_path)
     ds.write(filepath, data)
 
     assert ds.exists(filepath)
+
+
+def test_write_path_relative_datastore_path(tmp_path):
+    from tempfile import TemporaryDirectory
+    # There used to be a bug with writing when the datastore path was defined in a relative way
+    data = b'A test! 012'
+    filename = 'mydata.bin'
+    filepath = f'a/b/{filename}'
+
+    with TemporaryDirectory(dir='.') as tmpdirname:
+        print('created temporary directory', tmpdirname)
+        ds = FileDatastore(tmpdirname)
+        ds.write(filepath, data)
+
+        assert ds.exists(filepath)
+
 
 
 def test_exists(tmp_path):
@@ -72,7 +88,7 @@ def test_exists(tmp_path):
     assert ds.exists(location)
 
 
-def test_makekdirs(tmp_path):
+def test_makedirs(tmp_path):
     ds = FileDatastore(tmp_path)
     create_path = os.path.join('a', 'b')
 
