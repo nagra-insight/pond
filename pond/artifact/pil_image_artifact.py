@@ -1,3 +1,4 @@
+from matplotlib.pyplot import Figure
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
@@ -44,4 +45,27 @@ class PILImageArtifact(Artifact):
         self.data.save(file_, pnginfo=png_metadata)
 
 
+class FigureArtifact(Artifact):
+
+    # --- Artifact class interface
+
+    # TODO: this can't return another class
+    @classmethod
+    def _read_bytes(cls, file_, **kwargs):
+        """ Read a Matlab figure artifact from CSV file. """
+        image = Image.open(file_)
+        metadata = image.info
+        return PILImageArtifact(image, metadata)
+
+    @staticmethod
+    def filename(basename):
+        return basename + '.png'
+
+    def write_bytes(self, file_, **kwargs):
+        pil = PILImageArtifact.from_matplotlib_fig(self.data, self.metadata)
+        pil.write_bytes(file_, **kwargs)
+
+
 global_artifact_registry.register(artifact_class=PILImageArtifact, data_class=Image, format='png')
+global_artifact_registry.register(artifact_class=FigureArtifact, data_class=Figure,
+format='png')

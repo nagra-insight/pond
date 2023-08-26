@@ -44,6 +44,7 @@ class Pond:
         version = versioned_artifact.read(version_name=version_name)
         return version.artifact.data
 
+    # TODO: write_artifact to write directly an artifact
     def write(self,
               data: DataType,
               name: str,
