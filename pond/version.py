@@ -47,6 +47,9 @@ class Version:
 
         # TODO do I need to do this, or save multiple files?
         manifest['artifact'] = self.artifact.metadata
+        # TODO need real URI
+        manifest['uri'] = f'pond://{location}/artifact_name?/{str(self.version_name)}'
+
         # TODO this should be responsibility of the manifest
         datastore.write_yaml(manifest_location, manifest)
 

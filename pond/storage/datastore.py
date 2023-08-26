@@ -8,6 +8,8 @@ from pond.yaml import yaml_dump, yaml_load
 
 class Datastore(ABC):
 
+    # TODO need a datastore ID for the URI of the artifacts
+
     # -- Abstract interface
 
     @abstractmethod
