@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Sequence, Type, Union
+from typing import Any, Dict, Optional, Sequence, Set, Type, Union
 
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import global_artifact_registry
@@ -25,6 +25,12 @@ class Pond:
         self.version_name_class = version_name_class
         self.artifact_registry = artifact_registry
 
+        #: History of all read versions, will be used as default
+        #: "inputs" for written tables. Feel free to empty it whenever needed.
+        self.read_history: Set[str] = set()
+        #: Dict[TableRef, List[Version]]: History of all written versions
+        self.write_history: Set[str] = set()
+
     # todo: read with metadata (read_version?)
     def read(self,
              name: str,
@@ -42,6 +48,9 @@ class Pond:
             version_name_class=self.version_name_class,
         )
         version = versioned_artifact.read(version_name=version_name)
+        # TODO id defined in Version
+        version_id = f'pond://{self.location}/{name}/{str(version.version_name)}'
+        self.read_history.add(version_id)
         return version.artifact.data
 
     # TODO: write_artifact to write directly an artifact
@@ -63,6 +72,7 @@ class Pond:
             metadata = dict(metadata)
         metadata['source'] = self.source
         metadata['author'] = self.author
+        metadata['inputs'] = sorted(self.read_history)
 
         if artifact_class is None:
             artifact_class = self.artifact_registry.get_artifact(
@@ -80,6 +90,10 @@ class Pond:
         # todo handle write mode
         # todo: handle write kwargs
         version = versioned_artifact.write(data, metadata, version_name=version_name)
+
+        # TODO id defined in Version
+        version_id = f'pond://{self.location}/{name}/{str(version.version_name)}'
+        self.write_history.add(version_id)
         return version
 
-    # def export()
+    # todo def export()
