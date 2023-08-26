@@ -36,7 +36,6 @@ class FileDatastore(Datastore):
         return open(path, mode)
 
     def read(self, path: str) -> bytes:
-        path = os.path.join(self.base_path, path)
         with self.open(path, 'rb') as f:
             data = f.read()
         return data
