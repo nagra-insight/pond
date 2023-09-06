@@ -9,7 +9,7 @@ from pond.version_name import SimpleVersionName, VersionName
 from pond.versioned_artifact import VersionedArtifact
 
 
-class Pond:
+class Activity:
     # todo: source is a Source object
     def __init__(self,
                  source: str,

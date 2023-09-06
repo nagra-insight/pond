@@ -1,4 +1,4 @@
-from pond import Pond
+from pond import Activity
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import ArtifactRegistry
 from pond.conventions import versioned_artifact_location
@@ -27,7 +27,7 @@ class MockArtifact(Artifact):
 def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Can write and read artifacts when explicitly giving the artifact class
     datastore = FileDatastore(tmp_path)
-    pond = Pond(
+    pond = Activity(
         source='test_pond.py',
         datastore=datastore,
         location='test_location',
@@ -68,7 +68,7 @@ def test_pond_write_then_read_artifact_implicit(tmp_path):
     registry = ArtifactRegistry()
     registry.register(artifact_class=MockArtifact, data_class=str)
     datastore = FileDatastore(tmp_path)
-    pond = Pond(
+    pond = Activity(
         source='test_pond.py',
         datastore=datastore,
         location='test_location',
