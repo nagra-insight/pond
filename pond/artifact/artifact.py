@@ -26,6 +26,7 @@ class Artifact(ABC):
             if subclass.class_id() == class_id:
                 break
         else:
+            # todo this exception is not defined here
             raise InvalidArtifactClass(class_id)
         return subclass
 
@@ -40,6 +41,7 @@ class Artifact(ABC):
             The data of the artifact.
         metadata: dict
             A dictionary of the metadata saved with the artifact (optional).
+            The metadata keys and values will be stored as strings.
         """
         self.data = data
         if metadata is None:
@@ -99,6 +101,7 @@ class Artifact(ABC):
             artifact.metadata = metadata
         return artifact
 
+    # todo why the kwargs
     def write(self, path, **kwargs):
         """ Writes the artifact to file.
 
