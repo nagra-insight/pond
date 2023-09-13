@@ -57,3 +57,8 @@ def version_data_location(version_location: str, data_filename: str) -> str:
 def version_manifest_location(version_location: str) -> str:
     """ Manifest location with respect to a version root. """
     return urijoinpath(version_location, METADATA_DIRNAME, MANIFEST_FILENAME)
+
+
+def version_uri(location: str, artifact_name: str, version_name: VersionName):
+    uri = f'pond://{location}/{artifact_name}/{str(version_name)}'
+    return uri

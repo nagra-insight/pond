@@ -1,9 +1,12 @@
 from pond.conventions import (
     METADATA_DIRNAME,
     MANIFEST_FILENAME,
-    version_data_location, version_manifest_location,
+    version_data_location,
+    version_manifest_location,
+    version_uri,
     urijoinpath,
 )
+from pond.version_name import SimpleVersionName
 
 
 def test_urijoinpath():
@@ -22,3 +25,8 @@ def test_manifest_location():
     location = version_manifest_location('abc/')
     expected = f'abc/{METADATA_DIRNAME}/{MANIFEST_FILENAME}'
     assert location == expected
+
+
+def test_version_uri():
+    uri = version_uri(location='exp1', artifact_name='foo', version_name=SimpleVersionName(42))
+    assert uri == 'pond://exp1/foo/v42'
