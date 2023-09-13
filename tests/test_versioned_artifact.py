@@ -120,3 +120,17 @@ def test_versioned_artifact_write_then_read(tmp_path):
     # Check version name list
     assert versioned_artifact.version_names() == [first_version_name, version2.version_name]
 
+
+def test_uri(tmp_path):
+    datastore = FileDatastore(tmp_path)
+    versioned_artifact = VersionedArtifact(
+        name='test_artifact',
+        location='test_location',
+        datastore=datastore,
+        artifact_class=MockArtifact,
+        version_name_class=SimpleVersionName,
+    )
+
+    version_name = SimpleVersionName(version_number=42)
+    uri = versioned_artifact.get_uri(version_name)
+    assert uri == 'pond://test_location/test_artifact/v42'

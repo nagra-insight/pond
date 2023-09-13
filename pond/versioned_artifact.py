@@ -4,8 +4,14 @@ import time
 from typing import List, Optional, Type, Union
 
 from pond.artifact import Artifact
-from pond.conventions import WriteMode, version_manifest_location, version_location, \
-    versions_lock_file_location, versioned_artifact_location
+from pond.conventions import (
+    WriteMode,
+    version_manifest_location,
+    version_location,
+    version_uri,
+    versions_lock_file_location,
+    versioned_artifact_location,
+)
 from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, ArtifactVersionsIsLocked
 from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
@@ -253,6 +259,11 @@ class VersionedArtifact:
                 self.datastore.delete(version.location, recursive=True)
 
         return version
+
+    def get_uri(self, version_name):
+        """ Build URI for a specific version name. """
+        uri = version_uri(self.location, self.name, version_name)
+        return uri
 
     def _create_version_name(self, retry: bool = True) -> VersionName:
         versions_lock_file = versions_lock_file_location(self.location)
