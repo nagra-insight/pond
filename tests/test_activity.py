@@ -27,7 +27,7 @@ class MockArtifact(Artifact):
 def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Can write and read artifacts when explicitly giving the artifact class
     datastore = FileDatastore(tmp_path)
-    pond = Activity(
+    activity = Activity(
         source='test_pond.py',
         datastore=datastore,
         location='test_location',
@@ -38,7 +38,7 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Save first version of the data
     data = 'test_data'
     metadata = {'test': 'xyz'}
-    version = pond.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
+    version = activity.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
 
     first_version_name = SimpleVersionName.first()
     assert version.version_name == first_version_name
@@ -51,15 +51,15 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Write second version of the data
     data2 = 'test_data2'
     metadata2 = {'test': 'xyz2'}
-    version2 = pond.write(data2, name='foo', artifact_class=MockArtifact, metadata=metadata2)
+    version2 = activity.write(data2, name='foo', artifact_class=MockArtifact, metadata=metadata2)
     assert version2.version_name == SimpleVersionName.next(first_version_name)
 
     # Read the latest version
-    data_reloaded = pond.read('foo')
+    data_reloaded = activity.read('foo')
     assert data_reloaded == data2
 
     # Read the first version
-    data_reloaded = pond.read('foo', version_name='v1')
+    data_reloaded = activity.read('foo', version_name='v1')
     assert data_reloaded == data
 
 
@@ -68,7 +68,7 @@ def test_pond_write_then_read_artifact_implicit(tmp_path):
     registry = ArtifactRegistry()
     registry.register(artifact_class=MockArtifact, data_class=str)
     datastore = FileDatastore(tmp_path)
-    pond = Activity(
+    activity = Activity(
         source='test_pond.py',
         datastore=datastore,
         location='test_location',
@@ -80,5 +80,5 @@ def test_pond_write_then_read_artifact_implicit(tmp_path):
     # Save data without artifact class
     data = 'test_data'
     metadata = {'test': 'xyz'}
-    version = pond.write(data, name='foo', metadata=metadata)
+    version = activity.write(data, name='foo', metadata=metadata)
     assert isinstance(version.artifact, MockArtifact)
