@@ -7,8 +7,19 @@ from pond.yaml import yaml_dump, yaml_load
 
 
 class Datastore(ABC):
+    """ Versioned storage for the artifacts.
 
-    # TODO need a datastore ID for the URI of the artifacts
+    Parameters
+    ----------
+    id: str
+        Unique identifier for the datastore. This is used in the URI for each versioned
+        artifact to uniquely identify the artifact.
+    """
+
+    # -- Datastore class interface
+
+    def __init__(self, id: str):
+        self.id = id
 
     # -- Abstract interface
 

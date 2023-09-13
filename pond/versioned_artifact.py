@@ -262,7 +262,7 @@ class VersionedArtifact:
 
     def get_uri(self, version_name):
         """ Build URI for a specific version name. """
-        uri = version_uri(self.location, self.name, version_name)
+        uri = version_uri(self.datastore.id, self.location, self.name, version_name)
         return uri
 
     def _create_version_name(self, retry: bool = True) -> VersionName:

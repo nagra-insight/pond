@@ -16,7 +16,7 @@ def test_write_then_read(tmp_path):
         artifact=PandasDataFrameArtifact(data=data, metadata=metadata),
         manifest=VersionManifest(version_metadata),
     )
-    store = FileDatastore(base_path=str(tmp_path))
+    store = FileDatastore(base_path=str(tmp_path), id='foostore')
     version.write(datastore=store, location='abc')
 
     assert store.exists('abc/v42')

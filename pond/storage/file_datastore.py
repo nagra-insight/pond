@@ -10,6 +10,9 @@ class FileDatastore(Datastore):
 
     Parameters
     ----------
+    id: str
+        Unique identifier for the datastore. This is used in the URI for each versioned
+        artifact to uniquely identify the artifact.
     base_path: str
         Filesystem path at which the data store is based.
 
@@ -21,12 +24,13 @@ class FileDatastore(Datastore):
         If `base_path` exists but is not a directory.
     """
 
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str, id: str):
         if not os.path.exists(base_path):
             raise FileNotFoundError(f'Base path {base_path} does not exist')
         if not os.path.isdir(base_path):
             raise NotADirectoryError(f'Base path {base_path} exists but is not a directory')
 
+        super().__init__(id)
         self.base_path = base_path
 
     # -- Datastore interface

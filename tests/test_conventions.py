@@ -27,6 +27,7 @@ def test_manifest_location():
     assert location == expected
 
 
-def test_version_uri():
-    uri = version_uri(location='exp1', artifact_name='foo', version_name=SimpleVersionName(42))
-    assert uri == 'pond://exp1/foo/v42'
+def test_version_uri(tmp_path):
+    uri = version_uri(datastore_id='foostore', location='exp1', artifact_name='foo',
+                      version_name=SimpleVersionName(42))
+    assert uri == 'pond://foostore/exp1/foo/v42'

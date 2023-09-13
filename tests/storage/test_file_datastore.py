@@ -8,14 +8,14 @@ import pytest
 def test_base_path_does_not_exist(tmp_path):
     # path does not exist
     with pytest.raises(FileNotFoundError):
-        FileDatastore('does_not_exist')
+        FileDatastore(base_path='does_not_exist', id='foostore')
 
     # path exists, but it's not a directory
     filename = 'mydata'
     filepath = tmp_path / filename
     filepath.touch()
     with pytest.raises(NotADirectoryError):
-        FileDatastore(filepath)
+        FileDatastore(filepath, id='foostore')
 
 
 def test_read(tmp_path):
@@ -24,14 +24,14 @@ def test_read(tmp_path):
     filepath = tmp_path / filename
     filepath.write_bytes(content)
 
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     data = ds.read(filename)
 
     assert data == content
 
 
 def test_read_file_not_found(tmp_path):
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     with pytest.raises(FileNotFoundError):
         ds.read('does_not_exist')
 
@@ -41,7 +41,7 @@ def test_write(tmp_path):
     filename = 'mydata.bin'
     filepath = tmp_path / filename
 
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     ds.write(filename, data)
 
     content = filepath.read_bytes()
@@ -53,7 +53,7 @@ def test_write_intermediate_paths_created(tmp_path):
     filename = 'mydata.bin'
     filepath = f'a/b/{filename}'
 
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     ds.write(filepath, data)
 
     assert ds.exists(filepath)
@@ -67,7 +67,7 @@ def test_write_relative_datastore_path(tmp_path):
     filepath = f'a/b/{filename}'
 
     with TemporaryDirectory(dir='.') as tmpdirname:
-        ds = FileDatastore(tmpdirname)
+        ds = FileDatastore(tmpdirname, id='foostore')
         ds.write(filepath, data)
 
         assert ds.exists(filepath)
@@ -81,7 +81,7 @@ def test_read_relative_datastore_path(tmp_path):
     filepath = f'a/b/{filename}'
 
     with TemporaryDirectory(dir='.') as tmpdirname:
-        ds = FileDatastore(tmpdirname)
+        ds = FileDatastore(tmpdirname, id='foostore')
         ds.write(filepath, data)
         recovered = ds.read(filepath)
 
@@ -89,7 +89,7 @@ def test_read_relative_datastore_path(tmp_path):
 
 
 def test_exists(tmp_path):
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     assert ds.exists(str(tmp_path))
 
     filename = 'data.bin'
@@ -102,7 +102,7 @@ def test_exists(tmp_path):
 
 
 def test_makedirs(tmp_path):
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     create_path = os.path.join('a', 'b')
 
     expected_path = tmp_path / create_path
@@ -112,7 +112,7 @@ def test_makedirs(tmp_path):
 
 
 def test_open(tmp_path):
-    ds = FileDatastore(tmp_path)
+    ds = FileDatastore(tmp_path, id='foostore')
     filename = 'something.bin'
 
     assert not ds.exists('something.bin')

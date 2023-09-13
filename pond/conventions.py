@@ -59,6 +59,6 @@ def version_manifest_location(version_location: str) -> str:
     return urijoinpath(version_location, METADATA_DIRNAME, MANIFEST_FILENAME)
 
 
-def version_uri(location: str, artifact_name: str, version_name: VersionName):
-    uri = f'pond://{location}/{artifact_name}/{str(version_name)}'
+def version_uri(datastore_id: str, location: str, artifact_name: str, version_name: VersionName):
+    uri = f'pond://{datastore_id}/{location}/{artifact_name}/{str(version_name)}'
     return uri

@@ -4,6 +4,7 @@ from pond.storage.datastore import Datastore
 
 class DummyDataStore(Datastore):
     def __init__(self, read_content):
+        super().__init__(id='foostore')
         self.read_content = read_content
 
     def open(self, path, mode):

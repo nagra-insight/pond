@@ -27,7 +27,7 @@ class MockArtifact(Artifact):
 
 def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Can write and read artifacts when explicitly giving the artifact class
-    datastore = FileDatastore(tmp_path)
+    datastore = FileDatastore(tmp_path, id='foostore')
     activity = Activity(
         source='test_pond.py',
         datastore=datastore,
@@ -68,7 +68,7 @@ def test_pond_write_then_read_artifact_implicit(tmp_path):
     # Can write and read artifacts, finding an appropriate artifact class
     registry = ArtifactRegistry()
     registry.register(artifact_class=MockArtifact, data_class=str)
-    datastore = FileDatastore(tmp_path)
+    datastore = FileDatastore(tmp_path, id='foostore')
     activity = Activity(
         source='test_pond.py',
         datastore=datastore,
