@@ -96,4 +96,13 @@ class Activity:
         self.write_history.add(version_id)
         return version
 
+    def get_metadata(self) -> MetadataSource:
+        """ Collect activity metadata. """
+        activity_metadata = {
+            'source': self.source,
+            'author': self.author,
+            'inputs': sorted(self.read_history),
+        }
+        return DictMetadataSource(name='activity', metadata=activity_metadata)
+
     # todo def export()

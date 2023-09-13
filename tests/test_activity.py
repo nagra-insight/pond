@@ -2,6 +2,7 @@ from pond import Activity
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import ArtifactRegistry
 from pond.conventions import versioned_artifact_location
+from pond.metadata.metadata_source import MetadataSource
 from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
 
@@ -82,3 +83,25 @@ def test_pond_write_then_read_artifact_implicit(tmp_path):
     metadata = {'test': 'xyz'}
     version = activity.write(data, name='foo', metadata=metadata)
     assert isinstance(version.artifact, MockArtifact)
+
+
+def test_activity_metadata():
+    author = 'John Doe'
+    source = 'test_pond.py'
+    activity = Activity(
+        source=source,
+        datastore=None,
+        location='test_location',
+        author=author,
+    )
+    # Mock having read some inputs
+    inputs = sorted(['pond://test_location/foo/v1', 'pond://test_location/bar/v3'])
+    activity.read_history = inputs
+
+    metadata_source = activity.get_metadata()
+    assert isinstance(metadata_source, MetadataSource)
+    assert metadata_source.name == 'activity'
+    metadata = metadata_source.collect()
+    assert metadata['author'] == author
+    assert metadata['inputs'] == inputs
+    assert metadata['source'] == source
