@@ -1,11 +1,14 @@
-from uuid import uuid4
+import datetime
 
 from pond.artifact import Artifact
 from pond.conventions import (
-    version_data_location, version_location,
+    version_data_location,
+    version_location,
     version_manifest_location,
+    version_uri,
 )
 from pond.manifest import VersionManifest
+from pond.metadata.metadata_source import DictMetadataSource
 from pond.storage.datastore import Datastore
 from pond.version_name import VersionName
 
@@ -13,7 +16,8 @@ from pond.version_name import VersionName
 class Version:
     # TODO: Version does not load the artifact, it only loads the manifest.
 
-    def __init__(self, version_name: VersionName, artifact: Artifact, manifest: VersionManifest):
+    def __init__(self, artifact_name: str, version_name: VersionName, artifact: Artifact,
+                 manifest: VersionManifest):
         """ Manages a version: its manifest, data, and data store locations.
 
         Parameters
@@ -27,12 +31,24 @@ class Version:
         datastore: : DataStore
             DataStore instance
         """
+        self.artifact_name = artifact_name
         self.version_name = version_name
         self.manifest = manifest
         self.artifact = artifact
         self.metadata = {'artifact_class': type(artifact).__name__}
 
-    def write(self, datastore: Datastore, location: str, **artifact_write_kwargs):
+
+    def get_metadata(self, location, datastore, data_filename):
+        version_metadata = {
+            'uri': self.get_uri(location, datastore),
+            'filename': data_filename,
+            'date_time': datetime.datetime.now()
+        }
+        version_metadata_source = DictMetadataSource(name='version', metadata=version_metadata)
+        return version_metadata_source
+
+
+    def write(self, location: str, datastore: Datastore, metadata_sources, **artifact_write_kwargs):
         manifest = self.manifest.to_dict()
 
         #: location of the version folder
@@ -42,11 +58,16 @@ class Version:
         #: filename for the saved data
         data_filename = manifest.get('data_filename', None)
         if data_filename is None:
-            data_filename = self.artifact.filename(str(uuid4()))
+            data_basename = '{self.artifact.name}_{str(self.version_name)}'
+            data_filename = self.artifact.filename(data_basename)
             manifest['data_filename'] = data_filename
+
+        #artifact_metadata_source = self.artifact.get_metadata(location, datastore, data_filename)
 
         # TODO do I need to do this, or save multiple files?
         manifest['artifact'] = self.artifact.metadata
+        # TODO change this
+        manifest['artifact_name'] = self.artifact_name
         # TODO need real URI
         manifest['uri'] = f'pond://{location}/artifact_name?/{str(self.version_name)}'
 
@@ -78,4 +99,15 @@ class Version:
         with datastore.open(data_location, 'rb') as f:
             artifact = artifact_class.read_bytes(f, metadata=artifact_metadata)
 
-        return cls(version_name=version_name, artifact=artifact, manifest=manifest)
+        version = cls(
+            artifact_name=manifest['artifact_name'],
+            version_name=version_name,
+            artifact=artifact,
+            manifest=manifest,
+        )
+        return version
+
+    def get_uri(self, location, datastore):
+        """ Build URI for a specific location and datastore. """
+        uri = version_uri(datastore.id, location, self.artifact_name, self.version_name)
+        return uri
