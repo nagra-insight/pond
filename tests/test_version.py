@@ -2,29 +2,42 @@ from datetime import datetime
 import pandas as pd
 
 from pond.artifact.pandas_dataframe_artifact import PandasDataFrameArtifact
-from pond.manifest import VersionManifest
 from pond.metadata.metadata_source import MetadataSource
+from pond.metadata.manifest import Manifest
 from pond.storage.file_datastore import FileDatastore
 import pond.version
 from pond.version import Version
 from pond.version_name import SimpleVersionName
 
 
+def mock_datetime_now(module, date_time_now, monkeypatch):
+    class MockDatetime(datetime):
+        @classmethod
+        def now(cls):
+            return date_time_now
+    monkeypatch.setattr(module, "datetime", MockDatetime)
+
+
 def test_write_then_read(tmp_path):
     data = pd.DataFrame([[1, 2]], columns=['c1', 'c2'])
-    metadata = {'a': 'b'}
-    version_metadata = {'source': 'test'}
+    user_metadata = {'a': 'b', 'c': 11}
     artifact_name = 'meh'
     version = Version(
         artifact_name=artifact_name,
         version_name=SimpleVersionName(version_number=42),
-        artifact=PandasDataFrameArtifact(data=data, metadata=metadata),
-        manifest=VersionManifest(version_metadata),
+        artifact=PandasDataFrameArtifact(data=data),
     )
     store = FileDatastore(base_path=str(tmp_path), id='foostore')
-    version.write(location='abc', datastore=store, metadata_sources=[])
+    manifest = Manifest.from_nested_dict({'user': user_metadata})
+
+    assert version.manifest is None
+    version.write(location='abc', datastore=store, manifest=manifest)
+    saved_manifest = version.manifest.collect()
+    assert 'user' in saved_manifest
+    assert 'version' in saved_manifest
 
     assert store.exists('abc/v42')
+    assert store.exists('abc/v42/meh_v42.csv')
     assert store.exists('abc/v42/_pond/manifest.yml')
 
     reloaded_version = Version.read(
@@ -34,9 +47,22 @@ def test_write_then_read(tmp_path):
         datastore=store,
     )
 
-    pd.testing.assert_frame_equal(reloaded_version.artifact.data, data)
-    assert reloaded_version.artifact.metadata == {k: str(v) for k, v in metadata.items()}
+    # Reloaded artifact has got the user metadata
+    reloaded_artifact = reloaded_version.artifact
+    pd.testing.assert_frame_equal(reloaded_artifact.data, data)
+    expected_user_metadata = {k: str(v) for k, v in user_metadata.items()}
+    assert reloaded_artifact.metadata == expected_user_metadata
+
+    # Reloaded version has got a manifest with user metadata
     assert reloaded_version.artifact_name == artifact_name
+    assert reloaded_version.manifest.get_section('user').collect() == expected_user_metadata
+
+    # Reloaded version has got a manifest with version metadata
+    reloaded_version_metadata = reloaded_version.manifest.get_section('version').collect()
+    assert reloaded_version_metadata['artifact_name'] == artifact_name
+    assert reloaded_version_metadata['filename'] == 'meh_v42.csv'
+    assert reloaded_version_metadata['uri'] == 'pond://foostore/abc/meh/v42'
+    assert 'date_time' in reloaded_version_metadata
 
 
 def test_version_uri(tmp_path):
@@ -51,15 +77,6 @@ def test_version_uri(tmp_path):
     store = FileDatastore(base_path=str(tmp_path), id='foostore')
     uri = version.get_uri(location='exp1', datastore=store)
     assert uri == 'pond://foostore/exp1/foo/v42'
-
-
-def mock_datetime_now(module, date_time_now, monkeypatch):
-    class MockDatetime(datetime):
-        @classmethod
-        def now(cls):
-            return date_time_now
-
-    monkeypatch.setattr(module, "datetime", MockDatetime)
 
 
 def test_version_metadata(tmp_path, monkeypatch):

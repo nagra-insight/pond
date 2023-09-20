@@ -40,7 +40,7 @@ class Artifact(ABC):
         data: any
             The data of the artifact.
         metadata: dict
-            A dictionary of the metadata saved with the artifact (optional).
+            User-defined metadata, saved with the artifact (optional).
             The metadata keys and values will be stored as strings.
         """
         self.data = data
@@ -176,3 +176,13 @@ class Artifact(ABC):
 
         """
         pass
+
+    def get_artifact_metadata(self):
+        """
+        This is not the user metadata!
+
+        Returns
+        -------
+
+        """
+        return None
