@@ -3,6 +3,8 @@ from typing import Any, Dict, Optional, Sequence, Set, Type, Union
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import global_artifact_registry
 from pond.conventions import DataType, WriteMode
+from pond.metadata.metadata_source import DictMetadataSource, MetadataSource
+from pond.metadata.manifest import Manifest
 from pond.storage.datastore import Datastore
 from pond.version import Version
 from pond.version_name import SimpleVersionName, VersionName
@@ -41,15 +43,14 @@ class Activity:
         `read_version`
         """
         versioned_artifact = VersionedArtifact(
-            name=name,
+            artifact_name=name,
             location=self.location,
             datastore=self.datastore,
             artifact_class=None,  # TODO not none
             version_name_class=self.version_name_class,
         )
         version = versioned_artifact.read(version_name=version_name)
-        # TODO id defined in Version
-        version_id = f'pond://{self.location}/{name}/{str(version.version_name)}'
+        version_id = version.get_uri(self.location, self.datastore)
         self.read_history.add(version_id)
         return version.artifact.data
 
@@ -66,14 +67,6 @@ class Activity:
         # todo: write mode
         # todo: levels of metadata
 
-        if metadata is None:
-            metadata = {}
-        else:
-            metadata = dict(metadata)
-        metadata['source'] = self.source
-        metadata['author'] = self.author
-        metadata['inputs'] = sorted(self.read_history)
-
         if artifact_class is None:
             artifact_class = self.artifact_registry.get_artifact(
                 data_class=data.__class__,
@@ -81,19 +74,25 @@ class Activity:
             )
 
         versioned_artifact = VersionedArtifact(
-            name=name,
+            artifact_name=name,
             location=self.location,
             datastore=self.datastore,
             artifact_class=artifact_class,
             version_name_class=self.version_name_class,
         )
+
         # todo handle write mode
         # todo: handle write kwargs
-        version = versioned_artifact.write(data, metadata, version_name=version_name)
+        manifest = Manifest()
+        if metadata is not None:
+            user_metadata_source = DictMetadataSource(name='user', metadata=metadata)
+            manifest.add_section(user_metadata_source)
+        activity_metadata_source = self.get_metadata()
+        manifest.add_section(activity_metadata_source)
+        version = versioned_artifact.write(data, manifest, version_name=version_name)
 
-        # TODO id defined in Version
-        version_id = f'pond://{self.location}/{name}/{str(version.version_name)}'
-        self.write_history.add(version_id)
+        version_uri = version.get_uri(self.location, self.datastore)
+        self.write_history.add(version_uri)
         return version
 
     def get_metadata(self) -> MetadataSource:

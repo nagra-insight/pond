@@ -54,8 +54,13 @@ class Manifest:
         if metadata_source is not None:
             self._sections[metadata_source.section_name()] = metadata_source
 
-    def get_section(self, name, default=None):
-        return self._sections.get(name, default)
+    def collect_section(self, name, default_metadata=None):
+        source = self._sections.get(name, None)
+        if source is None:
+            metadata = default_metadata
+        else:
+            metadata = source.collect()
+        return metadata
 
     def collect(self):
         dict_ = {}

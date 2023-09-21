@@ -85,7 +85,8 @@ class VersionedArtifact:
             prev_version_name = self.latest_version_name(raise_if_none=False)
             version_name = self.version_name_class.next(prev_version_name)
 
-        artifact = self.artifact_class(data, metadata=manifest.get_section('user'))
+        user_metadata = manifest.collect_section('user', default_metadata={})
+        artifact = self.artifact_class(data, metadata=user_metadata)
         version_manifest = VersionManifest({})
         version = Version(self.artifact_name, version_name, artifact, version_manifest)
 

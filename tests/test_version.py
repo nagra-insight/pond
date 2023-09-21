@@ -55,10 +55,10 @@ def test_write_then_read(tmp_path):
 
     # Reloaded version has got a manifest with user metadata
     assert reloaded_version.artifact_name == artifact_name
-    assert reloaded_version.manifest.get_section('user').collect() == expected_user_metadata
+    assert reloaded_version.manifest.collect_section('user') == expected_user_metadata
 
     # Reloaded version has got a manifest with version metadata
-    reloaded_version_metadata = reloaded_version.manifest.get_section('version').collect()
+    reloaded_version_metadata = reloaded_version.manifest.collect_section('version')
     assert reloaded_version_metadata['artifact_name'] == artifact_name
     assert reloaded_version_metadata['filename'] == 'meh_v42.csv'
     assert reloaded_version_metadata['uri'] == 'pond://foostore/abc/meh/v42'

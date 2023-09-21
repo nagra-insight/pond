@@ -28,10 +28,11 @@ class MockArtifact(Artifact):
 def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Can write and read artifacts when explicitly giving the artifact class
     datastore = FileDatastore(tmp_path, id='foostore')
+    location = 'test_location'
     activity = Activity(
         source='test_pond.py',
         datastore=datastore,
-        location='test_location',
+        location=location,
         author='John Doe',
         version_name_class=SimpleVersionName,
     )
@@ -45,7 +46,7 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     assert version.version_name == first_version_name
     assert version.artifact.metadata['test'] == metadata['test']
     assert datastore.exists(
-        versioned_artifact_location('test_location', 'foo'),
+        versioned_artifact_location(location, 'foo'),
     )
     assert isinstance(version.artifact, MockArtifact)
 
@@ -62,6 +63,11 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     # Read the first version
     data_reloaded = activity.read('foo', version_name='v1')
     assert data_reloaded == data
+
+    assert activity.read_history == {
+        version.get_uri(location, datastore),
+        version2.get_uri(location, datastore),
+    }
 
 
 def test_pond_write_then_read_artifact_implicit(tmp_path):

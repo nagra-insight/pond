@@ -74,10 +74,10 @@ class Version:
 
         manifest = Manifest.from_yaml(manifest_location, datastore)
 
-        version_metadata = manifest.get_section('version').collect()
+        version_metadata = manifest.collect_section('version')
         data_filename = version_metadata['filename']
         data_location = version_data_location(version_location_, data_filename)
-        user_metadata = manifest.get_section('user').collect()
+        user_metadata = manifest.collect_section('user')
         with datastore.open(data_location, 'rb') as f:
             artifact = artifact_class.read_bytes(f, metadata=user_metadata)
 
