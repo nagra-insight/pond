@@ -8,11 +8,14 @@ from pond.conventions import (
     WriteMode,
     version_manifest_location,
     version_location,
-    version_uri,
     versions_lock_file_location,
     versioned_artifact_location,
 )
-from pond.exceptions import ArtifactHasNoVersion, ArtifactVersionAlreadyExists, ArtifactVersionsIsLocked
+from pond.exceptions import (
+    ArtifactHasNoVersion,
+    ArtifactVersionAlreadyExists,
+    ArtifactVersionsIsLocked,
+)
 from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
 from pond.version import Version
@@ -26,7 +29,7 @@ NEW_VERSION_WAIT_MS = 1000
 
 class VersionedArtifact:
 
-    def __init__(self, name: str, location: str, datastore: Datastore,
+    def __init__(self, artifact_name: str, location: str, datastore: Datastore,
                  artifact_class: Type[Artifact], version_name_class: Type[VersionName]):
         """
 
@@ -35,14 +38,14 @@ class VersionedArtifact:
         datastore
         location
         """
-        self.name = name
+        self.artifact_name = artifact_name
         self.location = location
         self.datastore = datastore
         self.artifact_class = artifact_class
         self.version_name_class = version_name_class
         self.manifest = {}
 
-        self.versions_location = versioned_artifact_location(location, name)
+        self.versions_location = versioned_artifact_location(location, artifact_name)
         # todo this goes to conventions.py
         self.versions_list_location = f'{self.versions_location}/versions.json'
         self.manifest_location = f'{self.versions_location}/manifest.yml'
@@ -71,7 +74,7 @@ class VersionedArtifact:
     def _read_manifest(self):
         return self.datastore.read_yaml(self.manifest_location)
 
-    def write(self, data, metadata, version_name=None, **artifact_write_kwargs):
+    def write(self, data, manifest, version_name=None, **artifact_write_kwargs):
         # todo add save_mode
         # TODO crash if version_name class changes from previous versions
         # TODO crash if artifact class changes from previous versions
@@ -82,10 +85,11 @@ class VersionedArtifact:
             prev_version_name = self.latest_version_name(raise_if_none=False)
             version_name = self.version_name_class.next(prev_version_name)
 
-        artifact = self.artifact_class(data, metadata)
+        artifact = self.artifact_class(data, metadata=manifest.get_section('user'))
         version_manifest = VersionManifest({})
-        version = Version(version_name, artifact, version_manifest)
-        version.write(self.datastore, self.versions_location, **artifact_write_kwargs)
+        version = Version(self.artifact_name, version_name, artifact, version_manifest)
+
+        version.write(self.versions_location, self.datastore, manifest, **artifact_write_kwargs)
         self._register_version_name(version_name)
 
         return version
@@ -259,11 +263,6 @@ class VersionedArtifact:
                 self.datastore.delete(version.location, recursive=True)
 
         return version
-
-    def get_uri(self, version_name):
-        """ Build URI for a specific version name. """
-        uri = version_uri(self.datastore.id, self.location, self.name, version_name)
-        return uri
 
     def _create_version_name(self, retry: bool = True) -> VersionName:
         versions_lock_file = versions_lock_file_location(self.location)

@@ -6,6 +6,8 @@ from pond.artifact.pandas_dataframe_artifact import PandasDataFrameArtifact
 from pond.conventions import version_location
 from pond.exceptions import ArtifactVersionDoesNotExist
 from pond.manifest import VersionManifest
+from pond.metadata.metadata_source import DictMetadataSource
+from pond.metadata.manifest import Manifest
 from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
 from pond.versioned_artifact import VersionedArtifact
@@ -87,7 +89,7 @@ class MockArtifact(Artifact):
 def test_versioned_artifact_write_then_read(tmp_path):
     datastore = FileDatastore(tmp_path, id='foostore')
     versioned_artifact = VersionedArtifact(
-        name='test_artifact',
+        artifact_name='test_artifact',
         location='test_location',
         datastore=datastore,
         artifact_class=MockArtifact,
@@ -102,7 +104,8 @@ def test_versioned_artifact_write_then_read(tmp_path):
     # Create first version
     data = 'test_data'
     metadata = {'test': 'xyz'}
-    version = versioned_artifact.write(data=data, metadata=metadata)
+    manifest = Manifest.from_nested_dict({'user': metadata})
+    version = versioned_artifact.write(data=data, manifest=manifest)
 
     first_version_name = SimpleVersionName.first()
     assert version.version_name == first_version_name
@@ -114,23 +117,8 @@ def test_versioned_artifact_write_then_read(tmp_path):
     assert reloaded_artifact.artifact.metadata == metadata
 
     # Create another version
-    version2 = versioned_artifact.write(data='data2', metadata={})
+    version2 = versioned_artifact.write(data='data2', manifest=Manifest())
     assert version2.version_name == SimpleVersionName.next(version.version_name)
 
     # Check version name list
     assert versioned_artifact.version_names() == [first_version_name, version2.version_name]
-
-
-def test_uri(tmp_path):
-    datastore = FileDatastore(tmp_path, id='foostore')
-    versioned_artifact = VersionedArtifact(
-        name='test_artifact',
-        location='test_location',
-        datastore=datastore,
-        artifact_class=MockArtifact,
-        version_name_class=SimpleVersionName,
-    )
-
-    version_name = SimpleVersionName(version_number=42)
-    uri = versioned_artifact.get_uri(version_name)
-    assert uri == 'pond://foostore/test_location/test_artifact/v42'
