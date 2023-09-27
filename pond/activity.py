@@ -42,12 +42,10 @@ class Activity:
         See Also
         `read_version`
         """
-        versioned_artifact = VersionedArtifact(
+        versioned_artifact = VersionedArtifact.from_datastore(
             artifact_name=name,
             location=self.location,
             datastore=self.datastore,
-            artifact_class=None,  # TODO not none
-            version_name_class=self.version_name_class,
         )
         version = versioned_artifact.read(version_name=version_name)
         version_id = version.get_uri(self.location, self.datastore)

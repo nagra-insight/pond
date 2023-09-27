@@ -43,36 +43,50 @@ class VersionedArtifact:
         self.datastore = datastore
         self.artifact_class = artifact_class
         self.version_name_class = version_name_class
-        self.manifest = {}
+
+        self.versions_manifest = {
+            'artifact_class': artifact_class.class_id(),
+            'version_name_class': version_name_class.class_id(),
+        }
 
         self.versions_location = versioned_artifact_location(location, artifact_name)
         # todo this goes to conventions.py
         self.versions_list_location = f'{self.versions_location}/versions.json'
-        self.manifest_location = f'{self.versions_location}/manifest.yml'
+        self.versions_manifest_location = f'{self.versions_location}/manifest.yml'
 
         if not self.datastore.exists(self.versions_location):
-            # Create the versioned artifact folder organization
+            # Create the versioned artifact folder organization if it does not exist
             self.datastore.makedirs(self.versions_location)
             self._write_version_names([])
-            self.manifest['artifact_class'] = artifact_class.class_id()
-            self.manifest['version_name_class'] = version_name_class.class_id()
+            self.versions_manifest['artifact_class'] = artifact_class.class_id()
+            self.versions_manifest['version_name_class'] = version_name_class.class_id()
             self._write_manifest()
 
-        else:
-            # Load the versioned artifact metadata, including the artifact class and the version
-            # names class. If they are different from the ones passed in the constructor,
-            # raise an exception.
-            self.metadata = self._read_manifest()
-            artifact_class_id = self.metadata['artifact_class']
-            self.artifact_class = Artifact.subclass_from_id(artifact_class_id)
-            version_name_class_id = self.metadata['version_name_class']
-            self.version_name_class = VersionName.subclass_from_id(version_name_class_id)
+    @classmethod
+    def from_datastore(cls, artifact_name: str, location: str, datastore: Datastore):
+        versions_location = versioned_artifact_location(location, artifact_name)
+        versions_manifest_location = f'{versions_location}/manifest.yml'
+        versions_manifest = datastore.read_yaml(versions_manifest_location)
+
+        artifact_class_id = versions_manifest['artifact_class']
+        artifact_class = Artifact.subclass_from_id(artifact_class_id)
+        version_name_class_id = versions_manifest['version_name_class']
+        version_name_class = VersionName.subclass_from_id(version_name_class_id)
+
+        versioned_artifact = cls(
+            artifact_name=artifact_name,
+            location=location,
+            datastore=datastore,
+            artifact_class=artifact_class,
+            version_name_class=version_name_class,
+        )
+        return versioned_artifact
 
     def _write_manifest(self):
-        self.datastore.write_yaml(self.manifest_location, self.manifest)
+        self.datastore.write_yaml(self.versions_manifest_location, self.versions_manifest)
 
     def _read_manifest(self):
-        return self.datastore.read_yaml(self.manifest_location)
+        return self.datastore.read_yaml(self.versions_manifest_location)
 
     def write(self, data, manifest, version_name=None, **artifact_write_kwargs):
         # todo add save_mode
