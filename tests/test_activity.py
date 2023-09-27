@@ -1,3 +1,5 @@
+import pytest
+
 from pond import Activity
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import ArtifactRegistry
@@ -25,8 +27,8 @@ class MockArtifact(Artifact):
         return basename + '.mock'
 
 
-def test_pond_write_then_read_version_explicit(tmp_path):
-    """ Can write and read artifacts when explicitly giving the artifact class. """
+@pytest.fixture
+def activity(tmp_path):
     datastore = FileDatastore(tmp_path, id='foostore')
     location = 'test_location'
     activity = Activity(
@@ -36,6 +38,14 @@ def test_pond_write_then_read_version_explicit(tmp_path):
         author='John Doe',
         version_name_class=SimpleVersionName,
     )
+    return activity
+
+
+def test_pond_write_then_read_version_explicit(activity):
+    """ Can write and read artifacts when explicitly giving the artifact class. """
+
+    datastore = activity.datastore
+    location = activity.location
 
     # Save first version of the data
     data = 'test_data'
@@ -108,19 +118,8 @@ def test_pond_write_then_read_version_implicit(tmp_path):
     assert isinstance(version.artifact, MockArtifact)
 
 
-def test_read_data(tmp_path):
+def test_read_data(activity):
     """ Can read saved data. """
-    datastore = FileDatastore(tmp_path, id='foostore')
-    location = 'test_location'
-    activity = Activity(
-        source='test_pond.py',
-        datastore=datastore,
-        location=location,
-        author='John Doe',
-        version_name_class=SimpleVersionName,
-    )
-
-    # Save first version of the data
     data = 'test_data'
     metadata = {'test': 'xyz'}
     activity.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
@@ -129,18 +128,8 @@ def test_read_data(tmp_path):
     assert data_reloaded == data
 
 
-def test_read_artifact(tmp_path):
-    datastore = FileDatastore(tmp_path, id='foostore')
-    location = 'test_location'
-    activity = Activity(
-        source='test_pond.py',
-        datastore=datastore,
-        location=location,
-        author='John Doe',
-        version_name_class=SimpleVersionName,
-    )
-
-    # Save first version of the data
+def test_read_artifact(activity):
+    """ Can read saved artifacts. """
     data = 'test_data'
     metadata = {'test': 'xyz'}
     activity.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
@@ -170,3 +159,22 @@ def test_activity_metadata():
     assert metadata['author'] == author
     assert metadata['inputs'] == inputs
     assert metadata['source'] == source
+
+
+def test_write_inputs_to_metadata(activity):
+    activity.write('123', name='meh', artifact_class=MockArtifact)
+    activity.write('456', name='bah', artifact_class=MockArtifact)
+    activity.write('456', name='bah', artifact_class=MockArtifact)
+
+    meh = activity.read('meh')
+    bah_version = activity.read_version('bah')
+
+    activity.write('789', name='uzz', artifact_class=MockArtifact)
+    uzz_version = activity.read_version('uzz')
+    activity_metadata = uzz_version.manifest.collect_section('activity')
+
+    expected_inputs = ['pond://foostore/test_location/bah/v2',
+                       'pond://foostore/test_location/meh/v1']
+    # TODO activity manifest should parse inputs list
+    #assert activity_metadata['inputs'] == expected_inputs
+    assert activity_metadata['inputs'] == str(expected_inputs)

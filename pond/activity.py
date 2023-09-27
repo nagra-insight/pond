@@ -158,7 +158,6 @@ class Activity:
               artifact_class: Optional[Type[Artifact]] = None,
               format: Optional[str] = None,
               version_name: Optional[Union[str, VersionName]] = None,
-              inputs: Optional[Sequence[str]] = None,
               metadata: Optional[Dict[str, str]] = None,
               write_mode: WriteMode = WriteMode.ERROR_IF_EXISTS) -> Version:
         # todo: write mode
