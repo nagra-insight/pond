@@ -27,20 +27,37 @@ class Activity:
         self.version_name_class = version_name_class
         self.artifact_registry = artifact_registry
 
-        #: History of all read versions, will be used as default
-        #: "inputs" for written tables. Feel free to empty it whenever needed.
+        # History of all read versions, will be used as default
+        # "inputs" for written tables. Feel free to empty it whenever needed.
         self.read_history: Set[str] = set()
-        #: Dict[TableRef, List[Version]]: History of all written versions
+        # Dict[TableRef, List[Version]]: History of all written versions
         self.write_history: Set[str] = set()
 
-    # todo: read with metadata (read_version?)
+    # todo: read with metadata (read_artifact?)
     def read(self,
              name: str,
              version_name: Optional[Union[str, VersionName]] = None) -> Any:
         """ Read the data given its name and version name.
 
+        If no version name is specified, the latest version is read.
+
+        Parameters
+        ----------
+        name: str
+            Artifact name
+        version_name: str or VersionName
+            Version name, given as a string (more common) or as VersionName instance. If None,
+            the latest version name for the given artifact is used.
+
+        Return
+        ------
+        data: Any
+            The loaded data. The metadata is discarded.
+
         See Also
-        `read_version`
+        --------
+        `read_artifact` -- Read an Artifact object, including artifact data and metadata
+        `read_version` -- Read a Version object, including the artifact object and version manifest
         """
         versioned_artifact = VersionedArtifact.from_datastore(
             artifact_name=name,
@@ -52,7 +69,6 @@ class Activity:
         self.read_history.add(version_id)
         return version.artifact.data
 
-    # TODO: write_artifact to write directly an artifact
     def write(self,
               data: DataType,
               name: str,
@@ -63,7 +79,6 @@ class Activity:
               metadata: Optional[Dict[str, str]] = None,
               write_mode: WriteMode = WriteMode.ERROR_IF_EXISTS) -> Version:
         # todo: write mode
-        # todo: levels of metadata
 
         if artifact_class is None:
             artifact_class = self.artifact_registry.get_artifact(

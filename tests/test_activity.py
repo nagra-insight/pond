@@ -26,7 +26,7 @@ class MockArtifact(Artifact):
 
 
 def test_pond_write_then_read_artifact_explicit(tmp_path):
-    # Can write and read artifacts when explicitly giving the artifact class
+    """ Can write and read artifacts when explicitly giving the artifact class. """
     datastore = FileDatastore(tmp_path, id='foostore')
     location = 'test_location'
     activity = Activity(
@@ -64,6 +64,17 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     data_reloaded = activity.read('foo', version_name='v1')
     assert data_reloaded == data
 
+    assert activity.read_history == {
+        version.get_uri(location, datastore),
+        version2.get_uri(location, datastore),
+    }
+
+    # Read the first version, using a VersionName instance
+    version_name = SimpleVersionName(version_number=1)
+    data_reloaded = activity.read('foo', version_name=version_name)
+    assert data_reloaded == data
+
+    # Read history is unchanged because loaded the same data twice
     assert activity.read_history == {
         version.get_uri(location, datastore),
         version2.get_uri(location, datastore),
