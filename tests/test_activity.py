@@ -25,7 +25,7 @@ class MockArtifact(Artifact):
         return basename + '.mock'
 
 
-def test_pond_write_then_read_artifact_explicit(tmp_path):
+def test_pond_write_then_read_version_explicit(tmp_path):
     """ Can write and read artifacts when explicitly giving the artifact class. """
     datastore = FileDatastore(tmp_path, id='foostore')
     location = 'test_location'
@@ -57,12 +57,16 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     assert version2.version_name == SimpleVersionName.next(first_version_name)
 
     # Read the latest version
-    data_reloaded = activity.read('foo')
-    assert data_reloaded == data2
+    version_reloaded = activity.read_version('foo')
+    assert version_reloaded.version_name == version2.version_name
+    assert version_reloaded.artifact.data == data2
+    assert version_reloaded.artifact.metadata == metadata2
 
     # Read the first version
-    data_reloaded = activity.read('foo', version_name='v1')
-    assert data_reloaded == data
+    version_reloaded = activity.read_version('foo', version_name='v1')
+    assert version_reloaded.version_name == version.version_name
+    assert version_reloaded.artifact.data == data
+    assert version_reloaded.artifact.metadata == metadata
 
     assert activity.read_history == {
         version.get_uri(location, datastore),
@@ -71,8 +75,10 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
 
     # Read the first version, using a VersionName instance
     version_name = SimpleVersionName(version_number=1)
-    data_reloaded = activity.read('foo', version_name=version_name)
-    assert data_reloaded == data
+    version_reloaded = activity.read_version('foo', version_name=version_name)
+    assert version_reloaded.version_name == version.version_name
+    assert version_reloaded.artifact.data == data
+    assert version_reloaded.artifact.metadata == metadata
 
     # Read history is unchanged because loaded the same data twice
     assert activity.read_history == {
@@ -81,7 +87,7 @@ def test_pond_write_then_read_artifact_explicit(tmp_path):
     }
 
 
-def test_pond_write_then_read_artifact_implicit(tmp_path):
+def test_pond_write_then_read_version_implicit(tmp_path):
     # Can write and read artifacts, finding an appropriate artifact class
     registry = ArtifactRegistry()
     registry.register(artifact_class=MockArtifact, data_class=str)
@@ -100,6 +106,48 @@ def test_pond_write_then_read_artifact_implicit(tmp_path):
     metadata = {'test': 'xyz'}
     version = activity.write(data, name='foo', metadata=metadata)
     assert isinstance(version.artifact, MockArtifact)
+
+
+def test_read_data(tmp_path):
+    """ Can read saved data. """
+    datastore = FileDatastore(tmp_path, id='foostore')
+    location = 'test_location'
+    activity = Activity(
+        source='test_pond.py',
+        datastore=datastore,
+        location=location,
+        author='John Doe',
+        version_name_class=SimpleVersionName,
+    )
+
+    # Save first version of the data
+    data = 'test_data'
+    metadata = {'test': 'xyz'}
+    activity.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
+
+    data_reloaded = activity.read('foo', version_name='v1')
+    assert data_reloaded == data
+
+
+def test_read_artifact(tmp_path):
+    datastore = FileDatastore(tmp_path, id='foostore')
+    location = 'test_location'
+    activity = Activity(
+        source='test_pond.py',
+        datastore=datastore,
+        location=location,
+        author='John Doe',
+        version_name_class=SimpleVersionName,
+    )
+
+    # Save first version of the data
+    data = 'test_data'
+    metadata = {'test': 'xyz'}
+    activity.write(data, name='foo', artifact_class=MockArtifact, metadata=metadata)
+
+    artifact = activity.read_artifact('foo', version_name='v1')
+    assert artifact.data == data
+    assert artifact.metadata == metadata
 
 
 def test_activity_metadata():
