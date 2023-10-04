@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from typing import List, Optional, Type, Union
+from typing import List, Type, Union
 
 from pond.artifact import Artifact
 from pond.conventions import (
@@ -12,14 +12,12 @@ from pond.conventions import (
     versioned_artifact_location,
 )
 from pond.exceptions import (
-    ArtifactHasNoVersion,
-    ArtifactVersionAlreadyExists,
-    ArtifactVersionsIsLocked,
+    VersionAlreadyExists,
 )
-from pond.manifest import VersionManifest
 from pond.storage.datastore import Datastore
 from pond.version import Version
 from pond.version_name import VersionName
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +60,8 @@ class VersionedArtifact:
             self.versions_manifest['version_name_class'] = version_name_class.class_id()
             self._write_manifest()
 
+    # --- VersionedArtifact class interface
+
     @classmethod
     def from_datastore(cls, artifact_name: str, location: str, datastore: Datastore):
         versions_location = versioned_artifact_location(location, artifact_name)
@@ -82,28 +82,36 @@ class VersionedArtifact:
         )
         return versioned_artifact
 
-    def _write_manifest(self):
-        self.datastore.write_yaml(self.versions_manifest_location, self.versions_manifest)
+    # --- VersionedArtifact public interface
 
-    def _read_manifest(self):
-        return self.datastore.read_yaml(self.versions_manifest_location)
-
-    def write(self, data, manifest, version_name=None, **artifact_write_kwargs):
-        # todo add save_mode
+    def write(self, data, manifest, version_name=None,
+              write_mode: WriteMode = WriteMode.ERROR_IF_EXISTS):
         # TODO crash if version_name class changes from previous versions
         # TODO crash if artifact class changes from previous versions
-        # TODO collect version metadata
         # todo lock
 
         if version_name is None:
             prev_version_name = self.latest_version_name(raise_if_none=False)
             version_name = self.version_name_class.next(prev_version_name)
 
+        if not isinstance(version_name, VersionName):
+            version_name = VersionName.from_string(version_name)
+
         user_metadata = manifest.collect_section('user', default_metadata={})
         artifact = self.artifact_class(data, metadata=user_metadata)
         version = Version(self.artifact_name, version_name, artifact)
 
-        version.write(self.versions_location, self.datastore, manifest, **artifact_write_kwargs)
+        if version.exists(self.versions_location, self.datastore):
+            if write_mode == WriteMode.ERROR_IF_EXISTS:
+                uri = version.get_uri(self.versions_location, self.datastore)
+                raise VersionAlreadyExists(uri)
+            elif write_mode == WriteMode.OVERWRITE:
+                uri = version.get_uri(self.versions_location, self.datastore)
+                logger.info(f"Deleting existing version before overwriting: {uri}")
+                version_location_ = version_location(self.versions_location, version_name)
+                self.datastore.delete(version_location_, recursive=True)
+
+        version.write(self.versions_location, self.datastore, manifest)
         self._register_version_name(version_name)
 
         return version
@@ -147,10 +155,12 @@ class VersionedArtifact:
 
     def latest_version_name(self, raise_if_none=True) -> VersionName:
         """Get the name of the latest version. If none is defined, will raise an exception
+
         Raises
         ------
         ArtifactHasNoVersion
             If the artifact has no latest version
+
         Returns
         -------
         VersionName
@@ -219,6 +229,7 @@ class VersionedArtifact:
 
         return version
 
+    # TODO: TEST
     def delete_version(self, version_name: Union[str, VersionName]) -> None:
         """Delete a version, will not fail if the version did not exist
 
@@ -239,44 +250,7 @@ class VersionedArtifact:
         self._write_version_names(names)
         # todo: need to unlock versions.json here
 
-    def create_version(self,
-                       version_name: Union[str, VersionName] = '',
-                       save_mode: WriteMode = WriteMode.ERROR_IF_EXISTS) -> Optional[Version]:
-        """Creates a version (either a new one or overwrite/append to an existing one)
-
-        Parameters
-        ----------
-        version_name: Union[str, VersionName] = ''
-            Name of the new version. If not specified, a new version name is automatically computed
-            based on the current latest (this is safe to use even if it is the first version).
-        save_mode: WriteMode = WriteMode.ERROR_IF_EXISTS
-            Defines how to behave if the version already exist. ERROR_IF_EXISTS is the default and
-            recommended behavior. if you want to overwrite a version you have to explicitly set it
-            to WriteMode.OVERWRITE.
-        """
-        if not version_name:
-            name = self._create_version_name()
-        else:
-            if not isinstance(version_name, VersionName):
-                version_name = VersionName.from_string(version_name)
-            name = self._register_version_name(version_name)
-
-        version: Optional[Version]
-        version = Version(name, version_location(self.location, name), self.datastore)
-
-        # todo: manage the case where the version we want to create is in creation (manifest
-        #  does not exist but files are being written by another process).
-        if version.exists():
-            if save_mode == WriteMode.ERROR_IF_EXISTS:
-                raise ArtifactVersionAlreadyExists(version.location)
-            elif save_mode == WriteMode.IGNORE:
-                logger.info(f"ignoring already existing version at: {version.location}")
-                version = None
-            elif save_mode == WriteMode.OVERWRITE:
-                logger.info(f"deleting partitions at: {version.location}")
-                self.datastore.delete(version.location, recursive=True)
-
-        return version
+    # --- VersionedArtifact private interface
 
     def _create_version_name(self, retry: bool = True) -> VersionName:
         versions_lock_file = versions_lock_file_location(self.location)
@@ -314,3 +288,9 @@ class VersionedArtifact:
         """Sort, serialize and write version names"""
         strings = [str(name) for name in sorted(names)]
         self.datastore.write_json(self.versions_list_location, strings)
+
+    def _write_manifest(self):
+        self.datastore.write_yaml(self.versions_manifest_location, self.versions_manifest)
+
+    def _read_manifest(self):
+        return self.datastore.read_yaml(self.versions_manifest_location)
