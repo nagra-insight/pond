@@ -101,8 +101,7 @@ class VersionedArtifact:
 
         user_metadata = manifest.collect_section('user', default_metadata={})
         artifact = self.artifact_class(data, metadata=user_metadata)
-        version_manifest = VersionManifest({})
-        version = Version(self.artifact_name, version_name, artifact, version_manifest)
+        version = Version(self.artifact_name, version_name, artifact)
 
         version.write(self.versions_location, self.datastore, manifest, **artifact_write_kwargs)
         self._register_version_name(version_name)
