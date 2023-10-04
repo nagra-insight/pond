@@ -8,6 +8,7 @@ from pond.conventions import (
     version_manifest_location,
     version_uri,
 )
+from pond.exceptions import VersionDoesNotExist
 from pond.metadata.metadata_source import DictMetadataSource
 from pond.metadata.manifest import Manifest
 from pond.storage.datastore import Datastore
@@ -60,7 +61,6 @@ class Version:
 
         # save stored manifest
         self.manifest = manifest
-        # TODO return storage manifest?
 
     # todo store and recover artifact_class from manifest
     @classmethod
@@ -70,6 +70,8 @@ class Version:
         #: location of the manifest file
         manifest_location = version_manifest_location(version_location_)
 
+        if not datastore.exists(manifest_location):
+            raise VersionDoesNotExist(location, str(version_name))
         manifest = Manifest.from_yaml(manifest_location, datastore)
 
         version_metadata = manifest.collect_section('version')
@@ -85,6 +87,7 @@ class Version:
             artifact=artifact,
             manifest=manifest,
         )
+
         return version
 
     def get_uri(self, location, datastore):

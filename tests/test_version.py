@@ -1,8 +1,10 @@
 from datetime import datetime
 
 import pandas as pd
+import pytest
 
 from pond.artifact.pandas_dataframe_artifact import PandasDataFrameArtifact
+from pond.exceptions import VersionDoesNotExist
 from pond.metadata.metadata_source import MetadataSource
 from pond.metadata.manifest import Manifest
 from pond.storage.file_datastore import FileDatastore
@@ -123,3 +125,15 @@ def test_exists(tmp_path):
     version.write(location=location, datastore=store, manifest=Manifest())
 
     assert version.exists(location, store)
+
+
+def test_read_not_existing(tmp_path):
+    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    location = 'abc'
+    with pytest.raises(VersionDoesNotExist):
+        Version.read(
+            version_name='v1',
+            artifact_class=PandasDataFrameArtifact,
+            location=location,
+            datastore=store,
+        )

@@ -224,8 +224,6 @@ class VersionedArtifact:
             datastore=self.datastore,
             location=self.versions_location,
         )
-        #if not version.exists():
-        #    raise ArtifactVersionDoesNotExist(self.location, str(version_name))
 
         return version
 
