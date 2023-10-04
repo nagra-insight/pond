@@ -22,10 +22,10 @@ class ArtifactVersionDoesNotExist(Exception):
         super().__init__(f'The artifact at "{artifact_location}" has no version "{version_name}".')
 
 
-class ArtifactVersionAlreadyExists(Exception):
+class VersionAlreadyExists(Exception):
 
-    def __init__(self, version_location: str):
-        super().__init__(f'Version "{version_location}" already exists.')
+    def __init__(self, version_uri: str):
+        super().__init__(f'Version already exists:  {version_uri}.')
 
 
 class ArtifactVersionsIsLocked(Exception):
