@@ -103,10 +103,10 @@ class VersionedArtifact:
 
         if version.exists(self.versions_location, self.datastore):
             if write_mode == WriteMode.ERROR_IF_EXISTS:
-                uri = version.get_uri(self.versions_location, self.datastore)
+                uri = version.get_uri(self.location, self.datastore)
                 raise VersionAlreadyExists(uri)
             elif write_mode == WriteMode.OVERWRITE:
-                uri = version.get_uri(self.versions_location, self.datastore)
+                uri = version.get_uri(self.location, self.datastore)
                 logger.info(f"Deleting existing version before overwriting: {uri}")
                 version_location_ = version_location(self.versions_location, version_name)
                 self.datastore.delete(version_location_, recursive=True)

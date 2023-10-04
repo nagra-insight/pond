@@ -1,7 +1,7 @@
 import pytest
 
 from pond.artifact import Artifact
-from pond.conventions import WriteMode
+from pond.conventions import WriteMode, version_data_location, version_location
 from pond.exceptions import VersionAlreadyExists
 from pond.metadata.manifest import Manifest
 from pond.storage.file_datastore import FileDatastore
@@ -90,9 +90,17 @@ def test_write_mode_error_if_exists(versioned_artifact):
 
 
 def test_write_mode_overwrite(versioned_artifact):
-    versioned_artifact.write(data='123', manifest=Manifest())
+    datastore = versioned_artifact.datastore
+
+    v1 = versioned_artifact.write(data='123', manifest=Manifest())
     v2 = versioned_artifact.write(data='abc', manifest=Manifest())
-    assert v2.exists(versioned_artifact.versions_location, versioned_artifact.datastore)
+    assert v2.exists(versioned_artifact.versions_location, datastore)
+
+    # Add an extra file to check that the folder is deleted
+    version_location_ = version_location(versioned_artifact.versions_location, v1.version_name)
+    data_location = version_data_location(version_location_, 'tobedeleted.txt')
+    datastore.write_string(data_location, 'XYZ')
+    assert datastore.exists(data_location)
 
     # No exception is raised when overwriting v1
     versioned_artifact.write(
@@ -105,5 +113,6 @@ def test_write_mode_overwrite(versioned_artifact):
     version = versioned_artifact.read('v1')
     assert version.artifact.data == '234'
     # Manually added file is gone (version folder was wiped)
+    assert not datastore.exists(data_location)
     # v2 still exists
-    assert v2.exists(versioned_artifact.versions_location, versioned_artifact.datastore)
+    assert v2.exists(versioned_artifact.versions_location, datastore)
