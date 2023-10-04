@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import pandas as pd
 
 from pond.artifact.pandas_dataframe_artifact import PandasDataFrameArtifact
@@ -103,3 +104,22 @@ def test_version_metadata(tmp_path, monkeypatch):
     assert metadata['filename'] == data_filename
     assert metadata['uri'] == 'pond://foostore/exp1/foo/v42'
     assert metadata['date_time'] == date_time_now
+
+
+def test_exists(tmp_path):
+    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    location = 'abc'
+
+    data = pd.DataFrame([[1, 2]], columns=['c1', 'c2'])
+    version_name = SimpleVersionName(version_number=42)
+    version = Version(
+        artifact_name='foo',
+        version_name=version_name,
+        artifact=PandasDataFrameArtifact(data=data),
+    )
+
+    assert not version.exists(location, store)
+
+    version.write(location=location, datastore=store, manifest=Manifest())
+
+    assert version.exists(location, store)

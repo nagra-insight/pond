@@ -18,8 +18,7 @@ class Version:
 
     def __init__(self, artifact_name: str, version_name: VersionName, artifact: Artifact,
                  manifest: Optional[Manifest] = None):
-        """ Manages a version: its manifest, data, and data store locations.
-
+        """ Manages a version: its manifest, name, and artifact.
         """
         self.artifact_name = artifact_name
         self.version_name = version_name
@@ -36,8 +35,7 @@ class Version:
         version_metadata_source = DictMetadataSource(name='version', metadata=version_metadata)
         return version_metadata_source
 
-    def write(self, location: str, datastore: Datastore, manifest: Manifest,
-              **artifact_write_kwargs):
+    def write(self, location: str, datastore: Datastore, manifest: Manifest):
         # TODO: manifest is modified in-place, is that an issue?
 
         #: location of the version folder
@@ -58,7 +56,7 @@ class Version:
         datastore.makedirs(version_location_)
         data_location = version_data_location(version_location_, data_filename)
         with datastore.open(data_location, 'wb') as f:
-            self.artifact.write_bytes(f, **artifact_write_kwargs)
+            self.artifact.write_bytes(f)
 
         # save stored manifest
         self.manifest = manifest
@@ -93,3 +91,22 @@ class Version:
         """ Build URI for a specific location and datastore. """
         uri = version_uri(datastore.id, location, self.artifact_name, self.version_name)
         return uri
+
+    def exists(self, location: str, datastore: Datastore):
+        """ Does this version already exists on disk?
+
+        Parameters
+        ----------
+        location: str
+            Root location in the data store where artifacts are read/written. This is used to
+            create folder-like groups inside a datastore. This can be, for instance, the name of
+            a project or experiment.
+        datastore: Datastore
+            Data store object, representing the location where the artifacts are read/written.
+        """
+        #: location of the version folder
+        version_location_ = version_location(location, self.version_name)
+        #: location of the manifest file
+        manifest_location = version_manifest_location(version_location_)
+
+        return datastore.exists(manifest_location)
