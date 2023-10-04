@@ -160,7 +160,7 @@ class SimpleVersionName(VersionName):
         if prev is None:
             next_ = SimpleVersionName(1)
         elif not isinstance(prev, SimpleVersionName):
-            raise IncompatibleVersionName(repr(prev))
+            raise IncompatibleVersionName(prev, SimpleVersionName)
         else:
             next_ = SimpleVersionName(prev.version_number + 1)
         return next_
@@ -191,7 +191,9 @@ class DateTimeVersionName(VersionName):
     """DateTime version names are versions in the form of an ISO date time with space as a time
     separator (eg. "2020-01-02 03:04:05")"""
 
-    def __init__(self, dt: Union[date, datetime] = datetime.now()):
+    def __init__(self, dt: Union[date, datetime] = None):
+        if dt is None:
+            dt = datetime.now()
         if not isinstance(dt, datetime):
             dt = datetime(dt.year, dt.month, dt.day, 0, 0, 0)
         self.dt = dt
@@ -210,7 +212,7 @@ class DateTimeVersionName(VersionName):
         if prev is None:
             next_ = DateTimeVersionName(datetime.now())
         elif not isinstance(prev, DateTimeVersionName):
-            raise IncompatibleVersionName(repr(prev))
+            raise IncompatibleVersionName(prev, DateTimeVersionName)
         else:
             now = datetime.now()
             if now == prev.dt:

@@ -2,10 +2,10 @@ import pytest
 
 from pond.artifact import Artifact
 from pond.conventions import WriteMode, version_data_location, version_location
-from pond.exceptions import VersionAlreadyExists
+from pond.exceptions import IncompatibleVersionName, VersionAlreadyExists
 from pond.metadata.manifest import Manifest
 from pond.storage.file_datastore import FileDatastore
-from pond.version_name import SimpleVersionName
+from pond.version_name import DateTimeVersionName, SimpleVersionName
 from pond.versioned_artifact import VersionedArtifact
 
 
@@ -116,3 +116,12 @@ def test_write_mode_overwrite(versioned_artifact):
     assert not datastore.exists(data_location)
     # v2 still exists
     assert v2.exists(versioned_artifact.versions_location, datastore)
+
+
+def test_write_incompatible_version_name_class(versioned_artifact):
+    with pytest.raises(IncompatibleVersionName):
+        versioned_artifact.write(
+            data='123',
+            manifest=Manifest(),
+            version_name=DateTimeVersionName(),
+        )

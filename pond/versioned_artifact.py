@@ -12,7 +12,7 @@ from pond.conventions import (
     versioned_artifact_location,
 )
 from pond.exceptions import (
-    VersionAlreadyExists,
+    IncompatibleVersionName, VersionAlreadyExists,
 )
 from pond.storage.datastore import Datastore
 from pond.version import Version
@@ -29,12 +29,17 @@ class VersionedArtifact:
 
     def __init__(self, artifact_name: str, location: str, datastore: Datastore,
                  artifact_class: Type[Artifact], version_name_class: Type[VersionName]):
-        """
+        """ An artifact versioned and stored on disk.
+
+        `VersionedArtifact` manages the versioning, data, and metadata, of an artifact.
 
         Parameters
         ----------
-        datastore
-        location
+        artifact_name: str
+        location: str
+        datastore: Datastore
+        artifact_class: Type[Artifact]
+        version_name_class: Type[VersionName]
         """
         self.artifact_name = artifact_name
         self.location = location
@@ -84,18 +89,57 @@ class VersionedArtifact:
 
     # --- VersionedArtifact public interface
 
+    def read(self, version_name: Union[str, VersionName, None] = None) -> Version:
+        """Get a specific existing version or the latest one if an empty string is passed
+
+        Parameters
+        ----------
+        version_name: Union[str, VersionName], optional
+            Name of the version to return. If None or "" (empty string), the latest version will
+            be returned
+
+        Raises
+        ------
+        VersionDoesNotExist
+            If the requested version does not exist
+
+        Returns
+        -------
+        Version
+            The request version or the latest if none was requested
+        """
+
+        if version_name:
+            if isinstance(version_name, str):
+                version_name = self.version_name_class.from_string(version_name)
+        else:
+            version_name = self.latest_version_name()
+
+        version = Version.read(
+            version_name=version_name,
+            artifact_class=self.artifact_class,
+            datastore=self.datastore,
+            location=self.versions_location,
+        )
+
+        return version
+
     def write(self, data, manifest, version_name=None,
               write_mode: WriteMode = WriteMode.ERROR_IF_EXISTS):
-        # TODO crash if version_name class changes from previous versions
-        # TODO crash if artifact class changes from previous versions
         # todo lock
 
         if version_name is None:
             prev_version_name = self.latest_version_name(raise_if_none=False)
             version_name = self.version_name_class.next(prev_version_name)
 
-        if not isinstance(version_name, VersionName):
+        if isinstance(version_name, str):
             version_name = VersionName.from_string(version_name)
+
+        if not isinstance(version_name, self.version_name_class):
+            raise IncompatibleVersionName(
+                version_name=version_name,
+                version_name_class=self.version_name_class,
+            )
 
         user_metadata = manifest.collect_section('user', default_metadata={})
         artifact = self.artifact_class(data, metadata=user_metadata)
@@ -188,44 +232,6 @@ class VersionedArtifact:
             The latest version of this artifact
         """
         return self.read(self.latest_version_name())
-
-    def read(self, version_name: Union[str, VersionName, None] = None) -> Version:
-        """Get a specific existing version or the latest one if an empty string is passed
-
-        Parameters
-        ----------
-        version_name: Union[str, VersionName], optional
-            Name of the version to return. If None or "" (empty string), the latest version will
-            be returned
-
-        Raises
-        ------
-        ArtifactHasNoVersion
-            If the latest version was requested and the artifact has no version
-        ArtifactVersionDoesNotExist
-            If the requested version does not exist
-
-        Returns
-        -------
-        Version
-            The request version or the latest if none was requested
-        """
-
-        if version_name:
-            if isinstance(version_name, str):
-                version_name = self.version_name_class.from_string(version_name)
-            # todo: check that version_name matches self.version_name_class
-        else:
-            version_name = self.latest_version_name()
-
-        version = Version.read(
-            version_name=version_name,
-            artifact_class=self.artifact_class,
-            datastore=self.datastore,
-            location=self.versions_location,
-        )
-
-        return version
 
     # TODO: TEST
     def delete_version(self, version_name: Union[str, VersionName]) -> None:

@@ -1,7 +1,11 @@
+from typing import Type
+
+
 class IncompatibleVersionName(Exception):
 
-    def __init__(self, version_name: str):
-        super().__init__(f'Incompatible version name: {version_name}.')
+    def __init__(self, version_name: 'VersionName', version_name_class: Type['VersionName']):
+        msg = (f'Version name: "{version_name}" not of type "{version_name_class.__name__}".')
+        super().__init__(msg)
 
 
 class InvalidVersionName(Exception):
@@ -10,16 +14,10 @@ class InvalidVersionName(Exception):
         super().__init__(f'Invalid version name: {version_name}.')
 
 
-class ArtifactHasNoVersion(Exception):
-
-    def __init__(self, artifact_location: str):
-        super().__init__(f'The artifact at "{artifact_location}" has no versions.')
-
-
-class ArtifactVersionDoesNotExist(Exception):
+class VersionDoesNotExist(Exception):
 
     def __init__(self, artifact_location: str, version_name: str):
-        super().__init__(f'The artifact at "{artifact_location}" has no version "{version_name}".')
+        super().__init__(f'Version "{version_name}" does not exist at "{artifact_location}".')
 
 
 class VersionAlreadyExists(Exception):
