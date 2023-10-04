@@ -13,16 +13,8 @@ class WriteMode(str, Enum):
 
     #: If a version already exists, it is first deleted and then written
     OVERWRITE = 'overwrite'
-    #: If a version already exists, nothing happens, the new data is not written
-    IGNORE = 'ignore'
     #: If a version already exists, an error is raised (this is generally the default behavior)
     ERROR_IF_EXISTS = 'errorifexists'
-
-
-class DataKind(Enum):
-    DATA_FRAME = 1
-    PICTURE = 2
-    MODEL = 3
 
 
 MANIFEST_FILENAME = 'manifest.yml'
