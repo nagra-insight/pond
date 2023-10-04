@@ -3,7 +3,8 @@ import pytest
 from pond import Activity
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import ArtifactRegistry
-from pond.conventions import versioned_artifact_location
+from pond.conventions import WriteMode, versioned_artifact_location
+from pond.exceptions import VersionAlreadyExists
 from pond.metadata.metadata_source import MetadataSource
 from pond.storage.file_datastore import FileDatastore
 from pond.version_name import SimpleVersionName
@@ -30,11 +31,10 @@ class MockArtifact(Artifact):
 @pytest.fixture
 def activity(tmp_path):
     datastore = FileDatastore(tmp_path, id='foostore')
-    location = 'test_location'
     activity = Activity(
         source='test_pond.py',
         datastore=datastore,
-        location=location,
+        location='test_location',
         author='John Doe',
         version_name_class=SimpleVersionName,
     )
@@ -178,3 +178,31 @@ def test_write_inputs_to_metadata(activity):
     # TODO activity manifest should parse inputs list
     #assert activity_metadata['inputs'] == expected_inputs
     assert activity_metadata['inputs'] == str(expected_inputs)
+
+
+def test_write_mode_error_if_exists(activity):
+    activity.write('123', name='meh', artifact_class=MockArtifact, version_name='v1')
+    with pytest.raises(VersionAlreadyExists):
+        activity.write(
+            data='234',
+            name='meh',
+            artifact_class=MockArtifact,
+            version_name='v1',
+            write_mode=WriteMode.ERROR_IF_EXISTS,
+        )
+
+
+def test_write_mode_overwrite(activity):
+    activity.write('123', name='meh', artifact_class=MockArtifact)
+
+    # No exception is raised when overwriting v1
+    activity.write(
+        data='234',
+        name='meh',
+        artifact_class=MockArtifact,
+        version_name='v1',
+        write_mode=WriteMode.OVERWRITE,
+    )
+    # v1 has got new data
+    artifact = activity.read_artifact(name='meh', version_name='v1')
+    assert artifact.data == '234'

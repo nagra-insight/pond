@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Sequence, Set, Type, Union
+from typing import Any, Dict, Optional, Set, Type, Union
 
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import ArtifactRegistry, global_artifact_registry
@@ -152,6 +152,7 @@ class Activity:
         artifact = self.read_artifact(name, version_name)
         return artifact.data
 
+    # TODO version name is a string vs is a VersionName instance
     def write(self,
               data: DataType,
               name: str,
@@ -176,15 +177,18 @@ class Activity:
             version_name_class=self.version_name_class,
         )
 
-        # todo handle write mode
-        # todo: handle write kwargs
         manifest = Manifest()
         if metadata is not None:
             user_metadata_source = DictMetadataSource(name='user', metadata=metadata)
             manifest.add_section(user_metadata_source)
         activity_metadata_source = self.get_metadata()
         manifest.add_section(activity_metadata_source)
-        version = versioned_artifact.write(data, manifest, version_name=version_name)
+        version = versioned_artifact.write(
+            data=data,
+            manifest=manifest,
+            version_name=version_name,
+            write_mode=write_mode,
+        )
 
         version_uri = version.get_uri(self.location, self.datastore)
         self.write_history.add(version_uri)
