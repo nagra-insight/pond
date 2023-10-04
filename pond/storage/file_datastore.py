@@ -66,11 +66,12 @@ class FileDatastore(Datastore):
         return os.path.exists(complete_path)
 
     def delete(self, path: str, recursive: bool = False) -> None:
-        if os.path.exists(path):
+        complete_path = os.path.join(self.base_path, path)
+        if os.path.exists(complete_path):
             if recursive:
-                rmtree(path)
+                rmtree(complete_path)
             else:
-                os.remove(path)
+                os.remove(complete_path)
 
     def makedirs(self, path: str) -> None:
         """ Creates the specified directory if needed.

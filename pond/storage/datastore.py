@@ -105,7 +105,7 @@ class Datastore(ABC):
         path: str
             Path relative to the root of the data store.
         recursive: bool, optional, default is False
-            Wether to recursively delete the location
+            Whether to recursively delete the location
         """
         ...
 

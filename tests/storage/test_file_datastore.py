@@ -119,3 +119,30 @@ def test_open(tmp_path):
     with ds.open(filename, 'wb') as f:
         f.write(b'abc')
     assert ds.exists('something.bin')
+
+
+def test_delete_recursive(tmp_path):
+    ds = FileDatastore(tmp_path, id='foostore')
+
+    ds.makedirs('mydir')
+    dir_path = tmp_path / 'mydir'
+
+    filename = 'todelete.txt'
+    location = str(dir_path / filename)
+    ds.write('mydir/' + filename, b'something')
+    assert ds.exists(location)
+
+    ds.delete('mydir', recursive=True)
+    assert not ds.exists(location)
+    assert not ds.exists(str(dir_path))
+
+
+def test_delete_file(tmp_path):
+    ds = FileDatastore(tmp_path, id='foostore')
+
+    filename = 'todelete.txt'
+    ds.write(filename, b'something')
+    assert ds.exists(filename)
+
+    ds.delete(filename)
+    assert not ds.exists(filename)
