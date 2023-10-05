@@ -105,7 +105,7 @@ def test_version_metadata(tmp_path, monkeypatch):
     metadata = metadata_source.collect()
     assert metadata['filename'] == data_filename
     assert metadata['uri'] == 'pond://foostore/exp1/foo/v42'
-    assert metadata['date_time'] == date_time_now
+    assert metadata['date_time'] == str(date_time_now)
 
 
 def test_exists(tmp_path):

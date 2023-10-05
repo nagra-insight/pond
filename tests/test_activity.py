@@ -157,7 +157,7 @@ def test_activity_metadata():
     assert metadata_source.name == 'activity'
     metadata = metadata_source.collect()
     assert metadata['author'] == author
-    assert metadata['inputs'] == inputs
+    assert metadata['inputs'] == str(inputs)
     assert metadata['source'] == source
 
 

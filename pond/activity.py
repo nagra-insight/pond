@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional, Set, Type, Union
 from pond.artifact import Artifact
 from pond.artifact.artifact_registry import ArtifactRegistry, global_artifact_registry
 from pond.conventions import DataType, WriteMode
-from pond.metadata.metadata_source import DictMetadataSource, MetadataSource
+from pond.metadata.metadata_source import MetadataSource
+from pond.metadata.dict import DictMetadataSource
 from pond.metadata.manifest import Manifest
 from pond.storage.datastore import Datastore
 from pond.version import Version

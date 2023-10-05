@@ -9,7 +9,7 @@ from pond.conventions import (
     version_uri,
 )
 from pond.exceptions import VersionDoesNotExist
-from pond.metadata.metadata_source import DictMetadataSource
+from pond.metadata.dict import DictMetadataSource
 from pond.metadata.manifest import Manifest
 from pond.storage.datastore import Datastore
 from pond.version_name import VersionName

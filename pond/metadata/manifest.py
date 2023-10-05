@@ -1,4 +1,4 @@
-from pond.metadata.metadata_source import DictMetadataSource
+from pond.metadata.dict import DictMetadataSource
 
 
 class Manifest:
