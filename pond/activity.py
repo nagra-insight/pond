@@ -37,11 +37,11 @@ class Activity:
             create folder-like groups inside a datastore. This can be, for instance, the name of
             a project or experiment.
         datastore: Datastore
-            Data store object, representing the location where the artifacts are read/written.
+            Data store object, representing the storage where the artifacts are read/written.
         author: str
             Author name/identifier, used as metadata. Default is 'NA'.
         version_name_class: VersionName
-            Class to use to create increasing version names. The default value,
+            Class used to create increasing version names. The default value,
             `SimpleVersionName` creates version names as `v1`, `v2`, etc.
         artifact_registry: ArtifactRegistry
             Registry object mapping data types and file formats to an artifact class able to

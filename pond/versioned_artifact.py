@@ -1,10 +1,11 @@
 import json
 import logging
 import time
-from typing import List, Type, Union
+from typing import List, Type, Optional, Union
 
 from pond.artifact import Artifact
 from pond.conventions import (
+    DataType,
     WriteMode,
     version_manifest_location,
     version_location,
@@ -14,6 +15,7 @@ from pond.conventions import (
 from pond.exceptions import (
     IncompatibleVersionName, VersionAlreadyExists,
 )
+from pond.metadata.manifest import Manifest
 from pond.storage.datastore import Datastore
 from pond.version import Version
 from pond.version_name import VersionName
@@ -27,8 +29,12 @@ NEW_VERSION_WAIT_MS = 1000
 
 class VersionedArtifact:
 
-    def __init__(self, artifact_name: str, location: str, datastore: Datastore,
-                 artifact_class: Type[Artifact], version_name_class: Type[VersionName]):
+    def __init__(self,
+                 artifact_name: str,
+                 location: str,
+                 datastore: Datastore,
+                 artifact_class: Type[Artifact],
+                 version_name_class: Type[VersionName]):
         """ An artifact versioned and stored on disk.
 
         `VersionedArtifact` manages the versioning, data, and metadata, of an artifact.
@@ -36,10 +42,17 @@ class VersionedArtifact:
         Parameters
         ----------
         artifact_name: str
+            Name of the artifact.
         location: str
+            Root location in the data store where artifacts are read/written. This is used to
+            create folder-like groups inside a datastore. This can be, for instance, the name of
+            a project or experiment.
         datastore: Datastore
+            Data store object, representing the storage where the artifacts are read/written.
         artifact_class: Type[Artifact]
         version_name_class: Type[VersionName]
+            Class used to create increasing version names. The default value,
+            `SimpleVersionName` creates version names as `v1`, `v2`, etc.
         """
         self.artifact_name = artifact_name
         self.location = location
@@ -89,27 +102,27 @@ class VersionedArtifact:
 
     # --- VersionedArtifact public interface
 
-    def read(self, version_name: Union[str, VersionName, None] = None) -> Version:
-        """Get a specific existing version or the latest one if an empty string is passed
+    def read(self, version_name: Optional[Union[str, VersionName]] = None) -> Version:
+        """ Read a version of the artifact.
 
         Parameters
         ----------
         version_name: Union[str, VersionName], optional
-            Name of the version to return. If None or "" (empty string), the latest version will
-            be returned
+            Version name, given as a string (more common) or as VersionName instance. If None,
+            the latest version name for the given artifact is used.
 
         Raises
         ------
         VersionDoesNotExist
-            If the requested version does not exist
+            If the requested version does not exist.
 
         Returns
         -------
         Version
-            The request version or the latest if none was requested
+            The version object read from storage.
         """
 
-        if version_name:
+        if version_name is not None:
             if isinstance(version_name, str):
                 version_name = self.version_name_class.from_string(version_name)
         else:
@@ -124,8 +137,38 @@ class VersionedArtifact:
 
         return version
 
-    def write(self, data, manifest, version_name=None,
+    def write(self,
+              data: DataType,
+              manifest: Manifest,
+              version_name: Optional[Union[str, VersionName]] = None,
               write_mode: WriteMode = WriteMode.ERROR_IF_EXISTS):
+        """ Write some data to storage.
+
+        Parameters
+        ----------
+        data: DataType
+            The artifact data to write.
+        manifest: Manifest
+            Metadata to store with the data.
+        version_name: Union[str, VersionName], optional
+            Version name, given as a string (more common) or as VersionName instance. If None,
+            the latest version name for the given artifact is used.
+        write_mode: WriteMode
+            Write mode, either WriteMode.ERROR_IF_EXISTS or WriteMode.OVERWRITE.
+
+        Raises
+        ------
+        IncompatibleVersionName
+            If the provided version name does not correspond to the version name class used in
+            this versioned artifact.
+        VersionAlreadyExists
+            If the provided version name exists, and the write mode is "ERROR_IF_EXISTS".
+
+        Returns
+        -------
+        Version
+            The version object read from storage.
+        """
         # todo lock
 
         if version_name is None:
