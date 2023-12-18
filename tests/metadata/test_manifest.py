@@ -23,7 +23,7 @@ def test_from_nested_dict(nested_metadata):
 def test_to_form_yaml(tmp_path, nested_metadata):
     manifest = Manifest.from_nested_dict(nested_metadata)
 
-    datastore = FileDatastore(base_path=str(tmp_path), id='foostore')
+    datastore = FileDatastore(id='foostore', base_path=str(tmp_path))
     manifest_location = tmp_path / 'test.yml'
     manifest.to_yaml(manifest_location, datastore)
 

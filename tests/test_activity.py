@@ -30,7 +30,7 @@ class MockArtifact(Artifact):
 
 @pytest.fixture
 def activity(tmp_path):
-    datastore = FileDatastore(tmp_path, id='foostore')
+    datastore = FileDatastore(id='foostore', base_path=tmp_path)
     activity = Activity(
         source='test_pond.py',
         datastore=datastore,
@@ -101,7 +101,7 @@ def test_pond_write_then_read_version_implicit(tmp_path):
     # Can write and read artifacts, finding an appropriate artifact class
     registry = ArtifactRegistry()
     registry.register(artifact_class=MockArtifact, data_class=str)
-    datastore = FileDatastore(tmp_path, id='foostore')
+    datastore = FileDatastore(id='foostore', base_path=tmp_path)
     activity = Activity(
         source='test_pond.py',
         datastore=datastore,

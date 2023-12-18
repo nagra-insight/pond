@@ -30,7 +30,7 @@ def test_write_then_read(tmp_path):
         version_name=SimpleVersionName(version_number=42),
         artifact=PandasDataFrameArtifact(data=data),
     )
-    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    store = FileDatastore(id='foostore', base_path=str(tmp_path))
     manifest = Manifest.from_nested_dict({'user': user_metadata})
 
     assert version.manifest is None
@@ -77,7 +77,7 @@ def test_version_uri(tmp_path):
         artifact=PandasDataFrameArtifact(data=data),
         manifest=None,
     )
-    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    store = FileDatastore(id='foostore', base_path=str(tmp_path))
     uri = version.get_uri(location='exp1', datastore=store)
     assert uri == 'pond://foostore/exp1/foo/v42'
 
@@ -95,7 +95,7 @@ def test_version_metadata(tmp_path, monkeypatch):
     date_time_now = datetime(2020, 12, 25, 17, 5, 55)
     mock_datetime_now(pond.version.datetime, date_time_now, monkeypatch)
 
-    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    store = FileDatastore(id='foostore', base_path=str(tmp_path))
     data_filename = 'foo.csv'
 
     metadata_source = version.get_metadata('exp1', store, data_filename)
@@ -109,7 +109,7 @@ def test_version_metadata(tmp_path, monkeypatch):
 
 
 def test_exists(tmp_path):
-    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    store = FileDatastore(id='foostore', base_path=str(tmp_path))
     location = 'abc'
 
     data = pd.DataFrame([[1, 2]], columns=['c1', 'c2'])
@@ -128,7 +128,7 @@ def test_exists(tmp_path):
 
 
 def test_read_not_existing(tmp_path):
-    store = FileDatastore(base_path=str(tmp_path), id='foostore')
+    store = FileDatastore(id='foostore', base_path=str(tmp_path))
     location = 'abc'
     with pytest.raises(VersionDoesNotExist):
         Version.read(

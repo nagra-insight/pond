@@ -24,7 +24,7 @@ class FileDatastore(Datastore):
         If `base_path` exists but is not a directory.
     """
 
-    def __init__(self, base_path: str, id: str):
+    def __init__(self, id: str, base_path: str):
         if not os.path.exists(base_path):
             raise FileNotFoundError(f'Base path {base_path} does not exist')
         if not os.path.isdir(base_path):

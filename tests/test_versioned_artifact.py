@@ -25,7 +25,7 @@ class MockArtifact(Artifact):
 
 @pytest.fixture
 def versioned_artifact(tmp_path):
-    datastore = FileDatastore(tmp_path, id='foostore')
+    datastore = FileDatastore(id='foostore', base_path=tmp_path)
     versioned_artifact = VersionedArtifact(
         artifact_name='test_artifact',
         location='test_location',

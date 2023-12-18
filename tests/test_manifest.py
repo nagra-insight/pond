@@ -9,7 +9,7 @@ def test_artifact_manifest_to_dict(tmp_path):
 
 def test_artifact_manifest_write_yaml(tmp_path):
     manifest = ArtifactManifest({'foo': 'bar'})
-    datastore = FileDatastore(tmp_path, id='foostore')
+    datastore = FileDatastore(id='foostore', base_path=tmp_path)
     manifest.write_yaml(location='test.yml', datastore=datastore)
     assert datastore.exists(tmp_path / 'test.yml')
     assert datastore.read_yaml('test.yml') == {'metadata': {'foo': 'bar'}}
