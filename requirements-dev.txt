@@ -2,6 +2,7 @@
 -r requirements-pandas.txt
 -r requirements-dask.txt
 -r requirements-matplotlib.txt
+-r requirements-git.txt
 flake8==4.0.*
 jupyter==1.*
 mypy==0.991
