@@ -22,3 +22,6 @@ tests-reports/
 .mypy_cache/
 .pytest_cache/
 .env
+
+# mkdocs
+site/
